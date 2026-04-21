@@ -1,5 +1,14 @@
-const CACHE = 'hypnocards-v7';
-const ASSETS = ['/', '/index.html', '/cards_data.json', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
+const CACHE = 'hypnocards-v8';
+const ASSETS = [
+  '/',
+  '/index.html',
+  '/cards_data.json',
+  '/archetypes_data.json',
+  '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/archetypes/archetype-card-back.png'
+];
 self.addEventListener('install', e => {
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
@@ -13,7 +22,10 @@ self.addEventListener('activate', e => {
 });
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-  const networkFirst = url.pathname.endsWith('/index.html') || url.pathname.endsWith('/cards_data.json');
+  const networkFirst =
+    url.pathname.endsWith('/index.html') ||
+    url.pathname.endsWith('/cards_data.json') ||
+    url.pathname.endsWith('/archetypes_data.json');
   if (networkFirst) {
     e.respondWith(
       fetch(e.request)

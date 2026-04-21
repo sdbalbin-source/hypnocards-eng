@@ -177,6 +177,95 @@
             font-weight: 700;
         }
 
+        /* Archetypes: shuffle overlay */
+        .archetype-shuffle-stack {
+            position: relative;
+            width: min(220px, 58vw);
+            aspect-ratio: 2 / 3;
+        }
+        .archetype-shuffle-layer {
+            position: absolute;
+            inset: 0;
+            border-radius: 14px;
+            background-size: cover;
+            background-position: center;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65);
+            border: 1px solid rgba(212, 175, 125, 0.25);
+        }
+        .archetype-shuffle-layer:nth-child(1) { transform: translate(-6px, 4px) rotate(-3deg); opacity: 0.55; z-index: 1; }
+        .archetype-shuffle-layer:nth-child(2) { transform: translate(5px, -3px) rotate(2deg); opacity: 0.72; z-index: 2; animation: archetypeShuffleJitter 0.45s ease-in-out infinite; }
+        .archetype-shuffle-layer:nth-child(3) { transform: translate(0, 0) rotate(0deg); z-index: 3; animation: archetypeShuffleDeal 1.8s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes archetypeShuffleJitter {
+            0%, 100% { transform: translate(5px, -3px) rotate(2deg); }
+            50% { transform: translate(2px, 2px) rotate(-1deg); }
+        }
+        @keyframes archetypeShuffleDeal {
+            0% { transform: translate(40px, -20px) rotate(8deg) scale(0.92); }
+            35% { transform: translate(-28px, 12px) rotate(-6deg) scale(1); }
+            70% { transform: translate(16px, -8px) rotate(4deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        /* Archetypes: flip card (face / booklet) */
+        .archetype-perspective { perspective: 1100px; }
+        .archetype-flip-inner {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 2 / 3;
+            max-height: min(68vh, 520px);
+            transform-style: preserve-3d;
+            transition: transform 0.65s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .archetype-flip-inner.is-flipped { transform: rotateY(180deg); }
+        .archetype-face {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 1.15rem;
+            overflow: hidden;
+        }
+        .archetype-face-back {
+            transform: rotateY(180deg);
+            background: linear-gradient(165deg, #1f0f1c 0%, #0a060c 55%, #070408 100%);
+            border: 1px solid rgba(201, 169, 110, 0.28);
+            box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.45);
+        }
+        .archetype-prose-p {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.98rem;
+            line-height: 1.55;
+            color: rgba(245, 240, 235, 0.92);
+            margin-bottom: 0.85rem;
+        }
+        .archetype-section-label {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: rgba(212, 175, 125, 0.88);
+            margin-bottom: 0.35rem;
+        }
+        .archetype-question-callout {
+            margin-top: 1rem;
+            padding: 0.85rem 1rem;
+            border-radius: 0.75rem;
+            background: rgba(88, 28, 74, 0.35);
+            border: 1px solid rgba(168, 85, 247, 0.25);
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.05rem;
+            font-style: italic;
+            color: #f3e8ff;
+            text-align: center;
+            line-height: 1.45;
+        }
+        .archetype-list-teaser {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
         /* Animations */
         .slide-out-left { animation: slideOutLeft 0.3s forwards; }
         .slide-in-right { animation: slideInRight 0.3s forwards; }
@@ -306,8 +395,8 @@
         const THEME_ORDER = ['Freedom','Joy','Mischief','Playfulness','Safety & Trust','Relaxation','Pleasure','Desire','Sexy','Wildness'];
         const DEFAULT_EXCLUDED_CATEGORIES = ['Deepeners', 'Convincers', 'Triggers', 'Pleasure Metaphors'];
         const CANONICAL_ORIGIN = 'https://hypnocards-eng.pages.dev';
-        const APP_BUILD = 'build-canonical-2026-04-21-03';
-        const SW_BUILD = '2026-04-21-03';
+        const APP_BUILD = 'build-canonical-2026-04-22-archetypes';
+        const SW_BUILD = '2026-04-22-01';
 
         const AppState = {
             rawRows: [],          
@@ -322,20 +411,14 @@
               
             recordings: JSON.parse(localStorage.getItem('en_recordings_v1')) || [],
             archetypeFavorites: JSON.parse(localStorage.getItem('archetype_favorites_v1')) || [],
+            archetypeView: { cardId: null, fromView: 'random', flipped: false },
               
             selectedCategories: []
         };
         let deferredInstallPrompt = null;
         const ARCHETYPE_MODULE_TITLE = 'Archetypes of Pleasure';
-        const ARCHETYPE_CARD_BACK = 'icons/icon cards.png';
-        const ARCHETYPES_DATA = [
-            { id: 'archetype-1', name: 'The Muse', image: '', summary: 'Invites inspiration, sensitivity, and curiosity in erotic dynamics.', guidance: 'Use this archetype when you want to lead through subtle invitation and aesthetic tension.' },
-            { id: 'archetype-2', name: 'The Sovereign', image: '', summary: 'Centers authority, boundaries, and confident command.', guidance: 'Use this archetype when setting structure, ritual, and clear consent frameworks.' },
-            { id: 'archetype-3', name: 'The Devotee', image: '', summary: 'Embodies surrender, service, and meaningful offering.', guidance: 'Use this archetype to explore intentional submission and devotional focus.' },
-            { id: 'archetype-4', name: 'The Trickster', image: '', summary: 'Brings play, misdirection, teasing, and surprise.', guidance: 'Use this archetype to shift stuck energy with humor, chaos, and novelty.' },
-            { id: 'archetype-5', name: 'The Healer', image: '', summary: 'Holds restoration, aftercare, and emotional regulation.', guidance: 'Use this archetype to build trust, safety, and integration after intensity.' },
-            { id: 'archetype-6', name: 'The Wild One', image: '', summary: 'Channels primal expression, instinct, and embodied intensity.', guidance: 'Use this archetype when you want to explore raw energy while honoring negotiated limits.' }
-        ];
+        const ARCHETYPE_CARD_BACK = 'archetypes/archetype-card-back.png';
+        let ARCHETYPES_DATA = [];
 
         function normalizeCategoryKey(category) {
             return String(category || '').trim().replace(/\s+/g, ' ').toLowerCase();
@@ -554,6 +637,83 @@
         function renderMarkdown(text) {
             if (!text) return '';
             return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        }
+
+        function escapeHtmlArchetype(s) {
+            if (s == null || s === '') return '';
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function archetypeParagraphBlocks(text) {
+            if (!text) return '';
+            return String(text)
+                .split(/\n\n+/)
+                .map(block => block.trim())
+                .filter(Boolean)
+                .map(block => {
+                    const lines = block.split('\n').map(l => escapeHtmlArchetype(l.trim())).join('<br/>');
+                    return `<p class="archetype-prose-p">${lines}</p>`;
+                })
+                .join('');
+        }
+
+        function archetypeTeaserLine(card) {
+            const e = (card.essence || '').replace(/\s+/g, ' ').trim();
+            if (!e) return '';
+            const m = e.match(/^.{20,160}?[.!?](?=\s|$)/);
+            const first = m ? m[0] : e.slice(0, 140);
+            return first.length < e.length && !m ? first.trim() + '…' : first.trim();
+        }
+
+        function pruneArchetypeFavorites() {
+            const valid = new Set(ARCHETYPES_DATA.map(c => c.id));
+            const next = (AppState.archetypeFavorites || []).filter(id => valid.has(id));
+            if (next.length !== AppState.archetypeFavorites.length) {
+                AppState.archetypeFavorites = next;
+                try { localStorage.setItem('archetype_favorites_v1', JSON.stringify(next)); } catch (e) {}
+            }
+        }
+
+        async function loadArchetypesData() {
+            try {
+                const r = await fetch('archetypes_data.json', { cache: 'no-store' });
+                if (!r.ok) return;
+                const data = await r.json();
+                if (Array.isArray(data) && data.length) {
+                    ARCHETYPES_DATA = data;
+                    pruneArchetypeFavorites();
+                }
+            } catch (e) {}
+        }
+
+        function toggleArchetypeFlip() {
+            AppState.archetypeView.flipped = !AppState.archetypeView.flipped;
+            if (AppState.archetypeView.cardId) {
+                renderArchetypeCard(AppState.archetypeView.cardId, AppState.archetypeView.fromView);
+            }
+        }
+
+        function playArchetypeShuffleThen(callback) {
+            const app = document.getElementById('app');
+            const layer = document.createElement('div');
+            layer.className = 'fixed inset-0 z-[300] flex flex-col items-center justify-center bg-black/93 backdrop-blur-md';
+            layer.innerHTML = `
+                <div class="archetype-shuffle-stack mb-8">
+                    <div class="archetype-shuffle-layer" style="background-image:url('${ARCHETYPE_CARD_BACK}')"></div>
+                    <div class="archetype-shuffle-layer" style="background-image:url('${ARCHETYPE_CARD_BACK}')"></div>
+                    <div class="archetype-shuffle-layer" style="background-image:url('${ARCHETYPE_CARD_BACK}')"></div>
+                </div>
+                <p class="text-amber-200/80 serif-font text-lg tracking-wide">Shuffling the deck…</p>
+            `;
+            app.appendChild(layer);
+            window.setTimeout(() => {
+                layer.remove();
+                callback();
+            }, 1900);
         }
 
         function isIos() {
@@ -818,11 +978,30 @@
                     </div>
                     <div class="flex-1 overflow-y-auto px-6 pb-10 space-y-6 no-scrollbar">
                         <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
-                            <p class="text-gray-300 serif-font text-base leading-relaxed">This module helps you internalize hypnotic erotic language patterns through repetition, theme variation, and embodied vocal practice.</p>
+                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">What is this?</h3>
+                            <p class="text-gray-300 serif-font text-base leading-relaxed">This module helps you internalize hypnotic erotic language patterns through repetition, theme variation, and embodied vocal practice. Each card contains a specific pattern and examples across emotional themes so you can train both wording and tone.</p>
                         </div>
                         <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
-                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Usage</h3>
-                            <p class="text-gray-300 serif-font text-sm leading-relaxed">Use Basic or Custom deck, switch themes to adapt tone, flip cards for category explanation, and record short drills to improve delivery.</p>
+                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-3">How to use</h3>
+                            <div class="space-y-3 text-gray-300 serif-font text-base leading-relaxed">
+                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">1.</span><span>Choose a deck — <em>Basic</em> for core language patterns, or <em>Custom</em> to focus on specific categories.</span></div>
+                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">2.</span><span>Each card shows a <strong class="text-white">pattern name</strong> at the top. Read it, feel it, then practice saying it aloud.</span></div>
+                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">3.</span><span>Swipe left/right or use the arrows to move between cards.</span></div>
+                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">4.</span><span>Change the <strong class="text-white">theme</strong> (Relaxation, Desire, Joy...) at the bottom to feel how the same pattern shifts in tone and intention.</span></div>
+                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">5.</span><span>Tap <strong class="text-white">i</strong> on a card to see category context and explanation.</span></div>
+                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">6.</span><span>Use the <strong class="text-white">microphone</strong> to record practice and review your delivery.</span></div>
+                            </div>
+                        </div>
+                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Card types</h3>
+                            <div class="space-y-2 text-gray-300 serif-font text-sm leading-relaxed">
+                                <p><span class="text-white font-bold">Dynamic cards</span> — language patterns with examples per theme for quick modulation practice.</p>
+                                <p><span class="text-white font-bold">Static cards</span> — longer scripts and focused structures for deeper drills (such as Triggers, Deepeners, and Convincers).</p>
+                            </div>
+                        </div>
+                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Practice tip</h3>
+                            <p class="text-gray-300 serif-font text-sm leading-relaxed">Repeat the same card across multiple themes in one session. This builds flexibility while keeping structure stable, which improves real-time fluency.</p>
                         </div>
                     </div>
                 </div>
@@ -840,11 +1019,15 @@
                     </div>
                     <div class="flex-1 overflow-y-auto px-6 pb-10 space-y-6 no-scrollbar">
                         <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
-                            <p class="text-gray-300 serif-font text-base leading-relaxed">This module combines visual archetype cards with concise guidance. Draw cards randomly for inspiration or browse consciously when you need a specific energetic frame.</p>
+                            <p class="text-gray-300 serif-font text-base leading-relaxed">Each card pairs a visual face (your artwork) with a full "booklet" face: Essence, Gift, Shadow, Practice, and a closing question, mirroring the Archetypes of Pleasure companion booklet.</p>
                         </div>
                         <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
-                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Usage</h3>
-                            <p class="text-gray-300 serif-font text-sm leading-relaxed">Use Shuffle & Draw for spontaneous prompts, All Cards for deliberate choice, and Favorites to keep your working set easy to revisit.</p>
+                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">How to use</h3>
+                            <div class="space-y-3 text-gray-300 serif-font text-sm leading-relaxed">
+                                <p><strong class="text-white">Shuffle &amp; Draw</strong> runs a short deck animation, then reveals a random archetype.</p>
+                                <p><strong class="text-white">Tap the card</strong> to turn it and read the full text. Typography is tuned for comfortable reading on a phone.</p>
+                                <p><strong class="text-white">All Cards / Favorites</strong> let you browse deliberately or keep a shortlist for ongoing practice.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -886,7 +1069,7 @@
                     <div class="grid gap-4">
                         <button onclick="drawRandomArchetype()" class="glass-panel p-6 rounded-3xl text-left hover:border-purple-500/50 transition">
                             <h3 class="text-xl font-bold text-white serif-font mb-1">Shuffle & Draw</h3>
-                            <p class="text-gray-400 serif-font text-base">Randomly draw one archetype card.</p>
+                            <p class="text-gray-400 serif-font text-base">Animated shuffle, then reveal one archetype.</p>
                         </button>
                         <button onclick="renderArchetypesList(false)" class="glass-panel p-6 rounded-3xl text-left hover:border-purple-500/50 transition">
                             <h3 class="text-xl font-bold text-white serif-font mb-1">All Cards</h3>
@@ -903,9 +1086,12 @@
         }
 
         function drawRandomArchetype() {
-            if (!ARCHETYPES_DATA.length) return alert('No archetype cards loaded yet.');
+            if (!ARCHETYPES_DATA.length) {
+                alert('The archetype deck is still loading. Please wait a moment and try again.');
+                return;
+            }
             const idx = Math.floor(Math.random() * ARCHETYPES_DATA.length);
-            renderArchetypeCard(ARCHETYPES_DATA[idx].id, 'random');
+            playArchetypeShuffleThen(() => renderArchetypeCard(ARCHETYPES_DATA[idx].id, 'random'));
         }
 
         function renderArchetypesList(onlyFavorites) {
@@ -919,7 +1105,7 @@
                         <div class="flex items-center justify-between gap-3">
                             <div>
                                 <div class="text-white font-bold serif-font text-lg">${card.name}</div>
-                                <div class="text-gray-400 text-sm">${card.summary}</div>
+                                <div class="text-gray-400 text-sm archetype-list-teaser">${archetypeTeaserLine(card)}</div>
                             </div>
                             <div class="text-purple-300">${AppState.archetypeFavorites.includes(card.id) ? '★' : '☆'}</div>
                         </div>
@@ -950,23 +1136,79 @@
         function renderArchetypeCard(cardId, fromView) {
             const card = ARCHETYPES_DATA.find(c => c.id === cardId);
             if (!card) return;
+            if (AppState.archetypeView.cardId !== cardId) {
+                AppState.archetypeView = { cardId, fromView, flipped: false };
+            } else {
+                AppState.archetypeView.fromView = fromView;
+            }
+            const flipped = AppState.archetypeView.flipped;
             const isFav = AppState.archetypeFavorites.includes(card.id);
+            const backNav = fromView === 'favorites'
+                ? 'renderArchetypesList(true)'
+                : fromView === 'all'
+                    ? 'renderArchetypesList(false)'
+                    : 'renderArchetypesHome()';
+            const useFaceImage = card.image && String(card.image).trim();
+            const frontBgUrl = useFaceImage ? String(card.image).trim().replace(/'/g, "\\'") : ARCHETYPE_CARD_BACK;
             const app = document.getElementById('app');
             app.innerHTML = `
-                <div class="flex flex-col h-full bg-[#050408]">
-                    <div class="p-6 pt-8 flex items-center justify-between">
-                        <button onclick="${fromView === 'favorites' ? 'renderArchetypesList(true)' : fromView === 'all' ? 'renderArchetypesList(false)' : 'renderArchetypesHome()'}" class="p-2 bg-white/5 rounded-full"><i data-lucide="arrow-left"></i></button>
-                        <button onclick="toggleArchetypeFavorite('${card.id}'); renderArchetypeCard('${card.id}','${fromView}')" class="px-3 py-2 rounded-xl border border-purple-500/30 text-purple-200 text-xs font-mono">
+                <div class="flex flex-col h-full bg-[#050408] min-h-0">
+                    <div class="p-4 pt-6 flex items-center justify-between gap-3 flex-shrink-0">
+                        <button onclick="${backNav}" class="p-2 bg-white/5 rounded-full touch-manipulation"><i data-lucide="arrow-left"></i></button>
+                        <button onclick="toggleArchetypeFavorite('${card.id}'); renderArchetypeCard('${card.id}','${fromView}')" class="px-3 py-2 rounded-xl border border-purple-500/30 text-purple-200 text-xs font-mono touch-manipulation">
                             ${isFav ? '★ Favorited' : '☆ Add to favorites'}
                         </button>
                     </div>
-                    <div class="px-6 pb-6">
-                        <div class="glass-panel rounded-3xl overflow-hidden">
-                            <div class="h-64 bg-cover bg-center" style="background-image:url('${card.image || ARCHETYPE_CARD_BACK}')"></div>
-                            <div class="p-5 border-t border-white/10">
-                                <h3 class="text-2xl text-white serif-font font-bold mb-2">${card.name}</h3>
-                                <p class="text-gray-300 serif-font text-base mb-3">${card.summary}</p>
-                                <p class="text-purple-200 serif-font text-sm leading-relaxed">${card.guidance}</p>
+                    <div class="flex-1 flex flex-col min-h-0 px-4 pb-6">
+                        <div class="archetype-perspective flex-1 flex items-center justify-center min-h-0">
+                            <div class="w-full max-w-sm mx-auto">
+                                <div
+                                    role="button"
+                                    tabindex="0"
+                                    onclick="toggleArchetypeFlip()"
+                                    onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleArchetypeFlip();}"
+                                    class="archetype-flip-inner cursor-pointer touch-manipulation ${flipped ? 'is-flipped' : ''}"
+                                >
+                                    <div class="archetype-face bg-black">
+                                        <div class="absolute inset-0 bg-cover bg-center" style="background-image:url('${frontBgUrl}')"></div>
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent"></div>
+                                        <div class="absolute bottom-0 left-0 right-0 p-5 text-center">
+                                            <p class="text-amber-200/85 text-[0.65rem] tracking-[0.2em] uppercase font-mono mb-1">${escapeHtmlArchetype(card.realm)}</p>
+                                            <h3 class="text-3xl text-white serif-font font-bold leading-tight">${escapeHtmlArchetype(card.name)}</h3>
+                                            <p class="text-white/75 serif-font text-sm mt-2 leading-snug">${escapeHtmlArchetype(card.energy)}</p>
+                                            ${useFaceImage ? '' : '<p class="text-[0.7rem] text-amber-100/50 font-mono mt-4 tracking-wide">Portrait art coming soon · tap to read</p>'}
+                                            ${useFaceImage ? '<p class="text-[0.7rem] text-amber-100/55 font-mono mt-4 tracking-wide">Tap to read the full card</p>' : ''}
+                                        </div>
+                                    </div>
+                                    <div class="archetype-face archetype-face-back">
+                                        <div class="h-full flex flex-col min-h-0">
+                                            <div class="flex-shrink-0 px-5 pt-5 pb-3 text-center border-b border-amber-900/20">
+                                                <p class="archetype-section-label">Booklet</p>
+                                                <h3 class="text-lg text-amber-50 serif-font font-semibold">${escapeHtmlArchetype(card.name)}</h3>
+                                            </div>
+                                            <div class="flex-1 min-h-0 overflow-y-auto no-scrollbar px-5 py-4 pb-6">
+                                                <div class="mb-5">
+                                                    <div class="archetype-section-label">Essence</div>
+                                                    ${archetypeParagraphBlocks(card.essence)}
+                                                </div>
+                                                <div class="mb-5">
+                                                    <div class="archetype-section-label">Gift</div>
+                                                    ${archetypeParagraphBlocks(card.gift)}
+                                                </div>
+                                                <div class="mb-5">
+                                                    <div class="archetype-section-label">Shadow</div>
+                                                    ${archetypeParagraphBlocks(card.shadow)}
+                                                </div>
+                                                <div class="mb-4">
+                                                    <div class="archetype-section-label">Practice</div>
+                                                    ${archetypeParagraphBlocks(card.practice)}
+                                                </div>
+                                                <div class="archetype-question-callout">${escapeHtmlArchetype(card.question)}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-center text-[0.7rem] text-gray-500 font-mono mt-3">Tap card to turn</p>
                             </div>
                         </div>
                     </div>
@@ -1803,7 +2045,7 @@
             });
         }
 
-        ensureCategoryInfoLoaded().finally(() => {
+        Promise.all([ensureCategoryInfoLoaded(), loadArchetypesData()]).finally(() => {
             renderWelcome();
         });
 
