@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HypnoCards">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <title>HypnoCards - Master Edition V6</title>
+    
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- Core Styles --- */
+        :root {
+            --primary-bg: #000000;
+            --card-glass: rgba(20, 20, 25, 0.95);
+            --border-glass: rgba(255, 255, 255, 0.15);
+        }
+
+        body {   
+            font-family: 'DM Mono', monospace;
+            background-color: var(--primary-bg);   
+            color: #e0e0e0;   
+            overflow: hidden;   
+            user-select: none;   
+            -webkit-tap-highlight-color: transparent;   
+        }
+        .serif-font { font-family: 'Cormorant Garamond', serif; }
+        
+        /* --- Hypnotic Spiral Background --- */
+        .hypno-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            overflow: hidden;
+            z-index: -2;
+            background: #000;
+        }
+
+        .hypno-spiral {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 150vmax;
+            height: 150vmax;
+            transform-origin: center;
+            transform: translate(-50%, -50%);
+            animation: spinSpiral 15s linear infinite;
+            opacity: 0.6;
+        }
+
+        @keyframes spinSpiral {   
+            from { transform: translate(-50%, -50%) rotate(0deg); }   
+            to { transform: translate(-50%, -50%) rotate(-360deg); }   
+        }
+        
+        /* Vignette */
+        .vignette {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, transparent 20%, black 85%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* UI Elements */
+        .glass-panel {
+            background: var(--card-glass);   
+            backdrop-filter: blur(20px);   
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-glass);   
+            box-shadow: 0 15px 50px 0 rgba(0, 0, 0, 0.8);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        button.glass-panel:hover {
+            border-color: rgba(168, 85, 247, 0.5);
+            box-shadow: 0 15px 50px 0 rgba(0,0,0,0.8), 0 0 30px rgba(147, 51, 234, 0.15);
+        }
+
+        /* Card Styles */
+        .card-container { perspective: 1000px; width: 100%; height: 100%; position: relative; }
+        .card-inner {   
+            width: 100%; height: 100%; position: relative;   
+            transition: transform 0.55s cubic-bezier(0.25, 1, 0.5, 1);
+            transform-style: preserve-3d;   
+        }
+        .card-inner.flipped { transform: rotateY(180deg); }
+        .card-face {
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            border-radius: 1.5rem;   
+            display: flex; flex-direction: column;   
+            overflow: hidden;   
+        }
+        .card-face-back {
+            position: absolute; width: 100%; height: 100%;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            transform: rotateY(180deg);
+            border-radius: 1.5rem;
+            display: flex; flex-direction: column;
+            overflow: hidden;
+            background: rgba(20,10,40,0.97);
+            border: 4px solid #a855f7;
+            box-shadow: 0 15px 50px 0 rgba(0,0,0,0.8);
+        }
+
+        /* Info button */
+        .info-btn {
+            position: absolute; top: 12px; right: 12px; z-index: 50;
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.5);
+            font-family: 'DM Mono', monospace;
+            font-size: 13px; font-style: italic; font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .info-btn:hover { background: rgba(168,85,247,0.2); border-color: rgba(168,85,247,0.6); color: #c084fc; }
+        
+        /* Sticky Header */
+        .card-header-fixed {
+            flex: 0 0 auto;   
+            padding: 2.5rem 1.5rem 1.5rem 1.5rem;   
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            z-index: 10;
+        }
+
+        /* Scroll Area */
+        .card-scroll-area {
+            flex: 1 1 auto;   
+            min-height: 0;
+            overflow-y: auto;   
+            overflow-x: hidden;
+            padding: 1.5rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card-content-wrapper {
+            margin: auto 0;
+            width: 100%;
+        }
+        
+        /* Sticky Footer */
+        .card-footer-fixed {
+            flex: 0 0 auto;
+            padding: 1rem;
+            background: rgba(0,0,0,0.6);
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            z-index: 10;
+        }
+
+        /* Custom Scrollbar */
+        .card-scroll-area::-webkit-scrollbar { width: 4px; }
+        .card-scroll-area::-webkit-scrollbar-track { background: transparent; }
+        .card-scroll-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+        /* Card content bold highlight */
+        .card-content-text strong {
+            font-style: italic;
+            color: #c9a96e;
+            font-weight: 700;
+        }
+
+        /* Animations */
+        .slide-out-left { animation: slideOutLeft 0.3s forwards; }
+        .slide-in-right { animation: slideInRight 0.3s forwards; }
+        .slide-out-right { animation: slideOutRight 0.3s forwards; }
+        .slide-in-left { animation: slideInLeft 0.3s forwards; }
+        
+        @keyframes slideOutLeft { to { transform: translateX(-60px) rotate(-5deg); opacity: 0; } }
+        @keyframes slideInRight { from { transform: translateX(60px) rotate(5deg); opacity: 0; } to { transform: translateX(0) rotate(0); opacity: 1; } }
+        @keyframes slideOutRight { to { transform: translateX(60px) rotate(5deg); opacity: 0; } }
+        @keyframes slideInLeft { from { transform: translateX(-60px) rotate(-5deg); opacity: 0; } to { transform: translateX(0) rotate(0); opacity: 1; } }
+
+        /* Carousel items */
+        .carousel-item {
+            flex: 0 0 auto;
+            transition: all 0.3s ease; opacity: 0.45; transform: scale(0.88);
+            padding: 0.4rem 1rem; border-radius: 9999px; font-size: 0.8rem;
+            border: 1px solid rgba(255,255,255,0.1); cursor: pointer; color: white; white-space: nowrap;
+            font-family: 'DM Mono', monospace;
+            user-select: none;
+        }
+        .carousel-item:hover { opacity: 0.75; }
+        .carousel-item.active {
+            opacity: 1; transform: scale(1.05);
+            border-color: currentColor; background: rgba(255,255,255,0.1);
+            font-weight: bold; box-shadow: 0 0 15px rgba(255,255,255,0.05);
+        }
+
+        /* Card side nav arrows */
+        .card-nav-arrow {
+            width: 44px;
+            transition: color 0.2s ease, opacity 0.2s ease;
+            opacity: 0.9;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .card-nav-arrow i {
+            pointer-events: none;
+            transition: transform 0.2s ease, color 0.2s ease;
+        }
+        .card-nav-arrow:hover i { color: rgba(255,255,255,0.7) !important; }
+        .card-nav-arrow:active i { transform: scale(0.92); }
+        @media (min-width: 768px) {
+            .card-nav-arrow { width: 56px; }
+        }
+
+        /* Tooltips */
+        [data-tip] { position: relative; }
+        [data-tip]::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%; transform: translateX(-50%);
+            background: rgba(20,10,40,0.97);
+            color: #e9d5ff; font-size: 0.68rem;
+            font-family: 'DM Mono', monospace;
+            white-space: nowrap; padding: 5px 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(168,85,247,0.35);
+            pointer-events: none; opacity: 0;
+            transition: opacity 0.25s 0.6s; z-index: 200;
+        }
+        [data-tip]:hover::after { opacity: 1; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .recording-pulse { animation: pulseRed 1.5s infinite; color: #ef4444; border-color: #ef4444; }
+        @keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+
+        /* Dual examples divider */
+        .example-divider {
+            width: 40%; height: 1px;
+            background: linear-gradient(to right, transparent, rgba(168,85,247,0.4), transparent);
+            margin: 0.8rem auto;
+        }
+        .mask-linear { mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent); }
+    </style>
+</head>
+<body>
+    <div class="hypno-container">
+        <!-- SVG Classic Spiral -->
+        <svg class="hypno-spiral" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <path fill="none" stroke="#2e1065" stroke-width="8" stroke-linecap="round"
+                d="M100,100   
+                   m0,0  
+                   a4,4 0 0 1 4,4  
+                   a8,8 0 0 1 -8,8  
+                   a12,12 0 0 1 -12,-12  
+                   a16,16 0 0 1 16,-16  
+                   a20,20 0 0 1 20,20  
+                   a24,24 0 0 1 -24,24  
+                   a28,28 0 0 1 -28,-28  
+                   a32,32 0 0 1 32,-32  
+                   a36,36 0 0 1 36,36  
+                   a40,40 0 0 1 -40,40  
+                   a44,44 0 0 1 -44,-44  
+                   a48,48 0 0 1 48,-48  
+                   a52,52 0 0 1 52,52  
+                   a56,56 0 0 1 -56,56  
+                   a60,60 0 0 1 -60,-60  
+                   a64,64 0 0 1 64,-64  
+                   a68,68 0 0 1 68,68  
+                   a72,72 0 0 1 -72,72  
+                   a76,76 0 0 1 -76,-76  
+                   a80,80 0 0 1 80,-80  
+                   a84,84 0 0 1 84,84  
+                   a88,88 0 0 1 -88,88  
+                   a92,92 0 0 1 -92,-92  
+                   a96,96 0 0 1 96,-96  
+                   a100,100 0 0 1 100,100  
+                "
+            />
+        </svg>
+    </div>
+    <div class="vignette"></div>
+
+    <div id="app" class="h-screen w-full max-w-md mx-auto relative flex flex-col"></div>
+
+    <script>
+        // --- 1. State Management ---
+        // Fixed theme order
+        const THEME_ORDER = ['Freedom','Joy','Mischief','Playfulness','Safety & Trust','Relaxation','Pleasure','Desire','Sexy','Wildness'];
+        const DEFAULT_EXCLUDED_CATEGORIES = ['Deepeners', 'Convincers', 'Triggers', 'Pleasure Metaphors'];
+
+        const AppState = {
+            rawRows: [],          
+            cards: [],            
+            activeDeck: [],       
+            categories: [],       
+            themes: [],           
+              
+            currentIndex: 0,
+            currentTheme: 'Relaxation',
+            isRecording: false,
+              
+            favorites: JSON.parse(localStorage.getItem('en_favorites_v1')) || [],
+            recordings: JSON.parse(localStorage.getItem('en_recordings_v1')) || [],
+              
+            selectedCategories: []
+        };
+        let deferredInstallPrompt = null;
+
+        function normalizeCategoryKey(category) {
+            return String(category || '').trim().replace(/\s+/g, ' ').toLowerCase();
+        }
+
+        const DEFAULT_CATEGORY_INFO = {
+            "Anticipation Builder": { "pattern": "In a moment... / Imagine how it will feel when...", "description": "Creates positive expectation in the guided person's mind for something about to happen. Uses sensory language and vivid imagery to paint a picture of the desired experience. The guided person begins to believe in and therefore help create the forthcoming sensation." },
+            "Presuppositions": { "pattern": "You already know... / I wonder if you'll notice... / Whether X or Y...", "description": "Embeds assumptions into language so that the guided person accepts a premise without consciously evaluating it. The suggestion is wrapped inside a question or statement that takes the desired outcome for granted, reducing resistance by making the experience seem inevitable rather than imposed." },
+            "Directing Awareness": { "pattern": "Notice... / You can become aware of... / As you pay attention to...", "description": "Gently guides the guided person's attention toward a specific sensation, feeling, or experience. Rather than commanding, it uses phrases like notice or become aware of to invite focused presence. This anchors the suggestion to something real and immediate, making it feel natural and self-discovered." },
+            "Engaging the Imagination": { "pattern": "Imagine... / Pretend... / What if...? / As if...", "description": "Activates the guided person's imaginative capacity to create vivid mental imagery. By using metaphors and sensory descriptions, the guide helps the guided person experience something as real and tangible even if it begins as fantasy." },
+            "Language Softeners": { "pattern": "Maybe... / Perhaps... / If you'd like... / You might...", "description": "Transforms direct commands into gentle invitations, reducing resistance from the conscious mind. It makes the suggestion feel like a free choice rather than a demand." },
+            "Cause and Effect": { "pattern": "Because X... Y / As X... so Y / The more X... the more Y", "description": "Links two ideas or experiences with a logical cause and effect relationship. The mind accepts the connection and begins to produce the desired outcome as a consequence of something already happening." },
+            "Complex Equivalence": { "pattern": "X means Y / Doing X is the same as Y / This is like...", "description": "Creates equivalence between two separate things, fusing them into one meaning. When the guided person does or experiences one thing, it automatically carries the meaning of another." },
+            "Spectrum of Necessity": { "pattern": "You must... / You need to... / It's so right to...", "description": "Creates a sense of importance, urgency, or rightness around an experience or action. It frames the move toward the desired state as necessary and aligned." },
+            "Negation": { "pattern": "You don't have to... / There's no need to... / Not yet...", "description": "Suggests an idea by appearing to deny it. Because the mind must process the concept to understand its negation, the image still enters the unconscious while resistance stays low." },
+            "Amplification": { "pattern": "Imagine a dial / As X rises... / With each [breath / step / number]...", "description": "Intensifies and expands a sensation or experience that is already present. Uses scale and movement metaphors to guide deeper or stronger states." },
+            "Addressing the Subconscious": { "pattern": "Your unconscious mind... / The deeper part of you... / I'm speaking now to...", "description": "Communicates directly with the guided person's unconscious mind, bypassing rational filtering and inviting involuntary responses." },
+            "Empowerment and Integration Statements": { "pattern": "You are... / You carry within you... / This experience is yours...", "description": "Affirms inner strength and helps integrate what was felt during trance into the guided person's self concept so the experience continues beyond the session." },
+            "Triggers": { "pattern": "Every time I / only I say [word]... you feel...", "description": "Creates anchors between a specific word, sound, or gesture and a state. Once established, the trigger can reactivate the feeling quickly." },
+            "Deepeners": { "pattern": "With each step / number / breath... going deeper...", "description": "Moves the guided person from lighter trance into progressively deeper focus and relaxation, often through counting, breathing, and downward metaphors." },
+            "Convincers": { "pattern": "Notice how your [body part] begins to [involuntary response]...", "description": "Uses involuntary physical responses as felt evidence that trance is working, increasing trust and deepening the experience." },
+            "Pleasure Metaphors": { "pattern": "Like [sensory metaphor]... feel [desired sensation]...", "description": "Uses rich sensory metaphors to evoke embodied visceral experiences below rational analysis and awaken sensation directly." },
+            "Action Accelerator": { "pattern": "Verb + now / automatically / effortlessly", "description": "Uses strong active verbs and immediacy words such as now, automatically, and effortlessly to trigger present moment response without conscious deliberation." }
+        };
+
+        function normalizeCategoryInfoMap(rawInfo) {
+            const normalized = {};
+            if (!rawInfo || typeof rawInfo !== 'object') return normalized;
+            Object.entries(rawInfo).forEach(([rawCategory, rawValue]) => {
+                const category = normalizeCategoryKey(rawCategory);
+                if (!category) return;
+                const value = rawValue || {};
+                normalized[category] = {
+                    pattern: String(value.pattern || '').trim(),
+                    description: String(value.description || '').trim()
+                };
+            });
+            return normalized;
+        }
+
+        function attachCategoryInfoToCards(cards, infoMap) {
+            const normalizedInfo = normalizeCategoryInfoMap(infoMap || {});
+            return (cards || []).map(card => {
+                const info = normalizedInfo[normalizeCategoryKey(card.category)] || {};
+                return {
+                    ...card,
+                    infoPattern: String(info.pattern || '').trim(),
+                    infoDescription: String(info.description || '').trim()
+                };
+            });
+        }
+
+        function mergeCategoryInfoMaps(baseInfo, overrideInfo) {
+            const base = normalizeCategoryInfoMap(baseInfo || {});
+            const override = normalizeCategoryInfoMap(overrideInfo || {});
+            const merged = { ...base };
+            Object.keys(override).forEach(category => {
+                const baseEntry = base[category] || {};
+                const overrideEntry = override[category] || {};
+                merged[category] = {
+                    pattern: String(overrideEntry.pattern || baseEntry.pattern || '').trim(),
+                    description: String(overrideEntry.description || baseEntry.description || '').trim()
+                };
+            });
+            return merged;
+        }
+
+        async function ensureCategoryInfoLoaded() {
+            const existingInfo = normalizeCategoryInfoMap(CATEGORY_INFO);
+            const hasExistingInfo = Object.keys(existingInfo).length > 0;
+            let savedInfo = {};
+            try {
+                savedInfo = normalizeCategoryInfoMap(JSON.parse(localStorage.getItem('en_category_info_v1') || '{}'));
+            } catch (e) {}
+
+            if (!hasExistingInfo && Object.keys(savedInfo).length > 0) {
+                CATEGORY_INFO = mergeCategoryInfoMaps(DEFAULT_CATEGORY_INFO, savedInfo);
+            }
+
+            try {
+                const response = await fetch('cards_data.json', { cache: 'no-store' });
+                if (!response.ok) return;
+                const data = await response.json();
+                const fetchedInfo = normalizeCategoryInfoMap(data.category_info || {});
+                if (Object.keys(fetchedInfo).length > 0) {
+                    CATEGORY_INFO = mergeCategoryInfoMaps(DEFAULT_CATEGORY_INFO, mergeCategoryInfoMaps(savedInfo, fetchedInfo));
+                    AppState.cards = attachCategoryInfoToCards(AppState.cards, CATEGORY_INFO);
+                    AppState.activeDeck = attachCategoryInfoToCards(AppState.activeDeck, CATEGORY_INFO);
+                    try { localStorage.setItem('en_category_info_v1', JSON.stringify(CATEGORY_INFO)); } catch (e) {}
+                    try { localStorage.setItem('en_cards_data_v1', JSON.stringify(AppState.cards)); } catch (e) {}
+                }
+            } catch (e) {}
+        }
+
+        // --- 2. The Parsing Engine ---
+        function processCSV(data) {
+            const cleanData = data.map(row => {
+                const newRow = {};
+                Object.keys(row).forEach(k => newRow[k.trim()] = row[k]);
+                return newRow;
+            });
+
+            // Separate CATEGORY_INFO rows from card rows (robust to spaces/case)
+            const categoryInfoRows = cleanData.filter(r => String(r.ID || '').trim().toUpperCase() === 'CATEGORY_INFO');
+            const cardRows = cleanData.filter(r => String(r.ID || '').trim().toUpperCase() !== 'CATEGORY_INFO');
+
+            // Build CATEGORY_INFO lookup from CSV data
+            // Columns: ID=CATEGORY_INFO, Category=name, Pattern=PatternLabel, Content=Description
+            CATEGORY_INFO = normalizeCategoryInfoMap(DEFAULT_CATEGORY_INFO);
+            categoryInfoRows.forEach(r => {
+                const cat = normalizeCategoryKey(r.Category);
+                if (cat) {
+                    CATEGORY_INFO[cat] = {
+                        pattern: (r.Pattern || '').trim(),
+                        description: (r.Content || '').trim()
+                    };
+                }
+            });
+
+            AppState.rawRows = cardRows;
+
+            // Extract Unique Themes
+            const themesSet = new Set();
+            const skipThemes = new Set(['Dynamic', 'Static', 'General', '']);
+            cleanData.forEach(row => {
+                if (row.Theme && row.Theme.trim().length > 1 && !skipThemes.has(row.Theme.trim()))
+                    themesSet.add(row.Theme.trim());
+            });
+            AppState.themes = THEME_ORDER.filter(t => themesSet.has(t));
+            // Add any themes from CSV not in our order list
+            themesSet.forEach(t => { if (!AppState.themes.includes(t)) AppState.themes.push(t); });
+            if (AppState.themes.length === 0) AppState.themes = [...THEME_ORDER];
+
+            // Extract Categories
+            const catsMap = new Map();
+            cleanData.forEach(row => {
+                const catName = row.Category ? row.Category.trim() : 'General';
+                if (!catsMap.has(catName)) {
+                    catsMap.set(catName, row.Color || '#A0A0A0');
+                }
+            });
+            AppState.categories = Array.from(catsMap).map(([name, color]) => ({name, color}));
+
+            // Aggregation Logic — group by Pattern, variations by Theme
+            const cardsMap = new Map();
+            
+            cleanData.forEach(row => {
+                const pattern = row.Pattern ? row.Pattern.trim() : null;
+                if (!pattern) return;
+
+                const mapKey = pattern;
+
+                if (!cardsMap.has(mapKey)) {
+                    cardsMap.set(mapKey, {
+                        id: row.ID,   
+                        pattern: pattern,
+                        category: row.Category || 'General',
+                        color: row.Color || catsMap.get(row.Category) || '#fff',
+                        variations: {},   
+                        staticContent: null
+                    });
+                }
+
+                const card = cardsMap.get(mapKey);
+                const theme = row.Theme ? row.Theme.trim() : 'General';
+                const content = row.Content;
+
+                if (theme === 'General' || theme === 'Dynamic' || theme === 'Static' || !theme) {
+                    card.staticContent = card.staticContent ? card.staticContent + "<br><br>" + content : content;
+                } else {
+                    if (card.variations[theme]) {
+                        card.variations[theme] += "<br><br>" + content;
+                    } else {
+                        card.variations[theme] = content;
+                    }
+                }
+            });
+
+            AppState.cards = attachCategoryInfoToCards(Array.from(cardsMap.values()), CATEGORY_INFO);
+              
+            try {
+                localStorage.setItem('en_cards_data_v1', JSON.stringify(AppState.cards));
+                localStorage.setItem('en_themes_data_v1', JSON.stringify(AppState.themes));
+                localStorage.setItem('en_cats_data_v1', JSON.stringify(AppState.categories));
+                localStorage.setItem('en_category_info_v1', JSON.stringify(CATEGORY_INFO));
+            } catch (e) { console.warn("Storage quota exceeded"); }
+
+            alert(`Loaded successfully!\n${AppState.cards.length} unique patterns detected.`);
+            renderModeSelect();
+        }
+
+        function loadFromStorage() {
+            const savedCards = localStorage.getItem('en_cards_data_v1');
+            if (savedCards) {
+                try {
+                    AppState.cards = JSON.parse(savedCards);
+                    const savedThemes = JSON.parse(localStorage.getItem('en_themes_data_v1') || '[]');
+                    // Always apply fixed order
+                    AppState.themes = THEME_ORDER.filter(t => savedThemes.includes(t));
+                    savedThemes.forEach(t => { if (!AppState.themes.includes(t)) AppState.themes.push(t); });
+                    if (AppState.themes.length === 0) AppState.themes = [...THEME_ORDER];
+                    AppState.categories = JSON.parse(localStorage.getItem('en_cats_data_v1') || '[]');
+                    CATEGORY_INFO = mergeCategoryInfoMaps(
+                        DEFAULT_CATEGORY_INFO,
+                        JSON.parse(localStorage.getItem('en_category_info_v1') || '{}')
+                    );
+                    AppState.cards = attachCategoryInfoToCards(AppState.cards, CATEGORY_INFO);
+                    return true;
+                } catch(e) { return false; }
+            }
+            return false;
+        }
+
+        // --- 3. Core Logic Helpers ---
+
+        function renderMarkdown(text) {
+            if (!text) return '';
+            return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        }
+
+        function isIos() {
+            return /iphone|ipad|ipod/i.test(navigator.userAgent);
+        }
+
+        function updateInstallButtons() {
+            const installButtons = document.querySelectorAll('.install-app-btn');
+            installButtons.forEach(btn => {
+                if (deferredInstallPrompt) {
+                    btn.style.display = 'flex';
+                    btn.disabled = false;
+                    btn.innerText = 'Install app to home screen';
+                } else if (isIos()) {
+                    btn.style.display = 'flex';
+                    btn.disabled = false;
+                    btn.innerText = 'How to add app to home screen';
+                } else {
+                    btn.style.display = 'flex';
+                    btn.disabled = false;
+                    btn.innerText = 'Install app to home screen';
+                }
+            });
+        }
+
+        async function promptInstallApp() {
+            if (deferredInstallPrompt) {
+                deferredInstallPrompt.prompt();
+                const choice = await deferredInstallPrompt.userChoice;
+                if (choice && choice.outcome === 'accepted') {
+                    deferredInstallPrompt = null;
+                }
+                updateInstallButtons();
+                return;
+            }
+
+            if (isIos()) {
+                alert('To install on iPhone:\n1. Tap the Share button in Safari\n2. Choose "Add to Home Screen"\n3. Tap "Add"');
+                return;
+            }
+
+            alert('Install is not available yet. Open the app from its web URL in Chrome/Edge and try again.');
+        }
+
+        function startSession(mode) {
+            if (mode === 'all') {
+                AppState.activeDeck = AppState.cards
+                    .filter(c => !DEFAULT_EXCLUDED_CATEGORIES.includes(c.category))
+                    .sort(() => Math.random() - 0.5);
+                  
+                if (AppState.activeDeck.length === 0) {
+                    AppState.activeDeck = [...AppState.cards].sort(() => Math.random() - 0.5);
+                }
+
+            } else if (mode === 'custom') {
+                if (AppState.selectedCategories.length === 0) return alert("Please select at least one category.");
+                AppState.activeDeck = AppState.cards
+                    .filter(c => AppState.selectedCategories.includes(c.category))
+                    .sort(() => Math.random() - 0.5);
+            }
+              
+            if (AppState.activeDeck.length === 0) return alert("No cards found for this selection.");
+              
+            AppState.currentIndex = 0;
+            AppState.currentTheme = 'Relaxation';
+              
+            document.getElementById('app').innerHTML = '';
+            renderPlayer();
+            ensureCategoryInfoLoaded().then(() => updatePlayerContent());
+        }
+
+        function getCurrentCard() {
+            return AppState.activeDeck[AppState.currentIndex];
+        }
+
+        function getCardContent(card, theme) {
+            let content = null;
+            if (card.variations && card.variations[theme]) content = card.variations[theme];
+            else if (card.variations && card.variations['Relaxation']) content = card.variations['Relaxation'];
+            else if (card.staticContent) return card.staticContent;
+            else {
+                const keys = Object.keys(card.variations || {});
+                if (keys.length > 0) content = card.variations[keys[0]];
+            }
+            if (!content) return "No content found for this theme.";
+            // If array of 2 examples, join with divider
+            if (Array.isArray(content)) {
+                return content.map((ex, i) => ex).join('\n\n<div class="example-divider"></div>\n\n');
+            }
+            return content;
+        }
+
+        // --- 4. Render Views ---
+
+        function renderWelcome() {
+            // Load data from external JSON
+            if (AppState.cards.length === 0) {
+                fetch('cards_data.json')
+                    .then(r => r.json())
+                    .then(data => {
+                        AppState.cards = data.cards;
+                        AppState.categories = data.categories;
+                        CATEGORY_INFO = mergeCategoryInfoMaps(DEFAULT_CATEGORY_INFO, data.category_info || {});
+                        AppState.cards = attachCategoryInfoToCards(AppState.cards, CATEGORY_INFO);
+                        try { localStorage.setItem('en_category_info_v1', JSON.stringify(CATEGORY_INFO)); } catch (e) {}
+                        try { localStorage.setItem('en_cards_data_v1', JSON.stringify(AppState.cards)); } catch (e) {}
+                        AppState.themes = THEME_ORDER.slice();
+                    })
+                    .catch(() => {
+                        // fallback: try localStorage
+                        loadFromStorage();
+                    });
+            }
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full p-6 text-center relative z-10">
+                    <div class="mb-8 relative">
+                        <div class="absolute inset-0 bg-purple-500 blur-3xl opacity-20 rounded-full animate-pulse"></div>
+                        <h1 class="text-6xl font-bold serif-font text-white mb-2 tracking-tighter relative z-10">Hypno</h1>
+                        <h1 class="text-6xl font-bold serif-font text-purple-400 mb-4 tracking-tighter relative z-10">Cards</h1>
+                        <p class="text-gray-400 mt-2 text-sm tracking-widest uppercase" style="font-family:'DM Mono',monospace">Master Edition</p>
+                    </div>
+
+                    <button onclick="renderModeSelect()" class="w-full max-w-xs py-5 bg-white/10 border border-white/20 rounded-2xl text-white text-xl font-bold hover:bg-white/20 transition-all mb-4 flex items-center justify-center gap-3 shadow-lg shadow-purple-900/20 serif-font">
+                        <i data-lucide="play-circle"></i> Start Practice
+                    </button>
+
+                    <button onclick="showAbout()" class="w-full max-w-xs py-3 rounded-2xl border border-purple-500/20 text-purple-300 text-sm hover:bg-purple-500/10 transition flex items-center justify-center gap-2 serif-font">
+                        <i data-lucide="info"></i> About & How to Use
+                    </button>
+
+                    <button onclick="clearData()" class="absolute bottom-6 text-xs text-gray-600 hover:text-red-400 transition opacity-60 hover:opacity-100">Reset all data</button>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function showAbout() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="flex flex-col h-full bg-[#050408]">
+                    <div class="p-6 pt-8 flex items-center gap-4">
+                        <button onclick="renderWelcome()" class="p-2 bg-white/5 rounded-full"><i data-lucide="arrow-left"></i></button>
+                        <h2 class="text-2xl font-bold text-white serif-font">About HypnoCards</h2>
+                    </div>
+                    <div class="flex-1 overflow-y-auto px-6 pb-10 space-y-6 no-scrollbar">
+
+                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">What is this?</h3>
+                            <p class="text-gray-300 serif-font text-base leading-relaxed">HypnoCards is a practice tool for hypnotic language patterns. Each card contains a pattern structure with example sentences across different emotional themes — helping you internalize the language of trance.</p>
+                        </div>
+
+                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-3">How to use</h3>
+                            <div class="space-y-3 text-gray-300 serif-font text-base leading-relaxed">
+                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">1.</span><span>Choose a deck — <em>Basic</em> for core language patterns, or <em>Custom</em> to focus on specific categories.</span></div>
+                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">2.</span><span>Each card shows a <strong class="text-white">pattern name</strong> at the top. Read it, feel it, then practice saying it aloud.</span></div>
+                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">3.</span><span>Swipe left/right or use the arrows to move between cards.</span></div>
+                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">4.</span><span>Change the <strong class="text-white">theme</strong> (Relaxation, Desire, Joy...) at the bottom to see how the same pattern feels in different contexts.</span></div>
+                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">5.</span><span>Tap <strong class="text-white">i</strong> on the card to read about the pattern type and its use in trance.</span></div>
+                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">6.</span><span>Use the <strong class="text-white">microphone</strong> to record yourself practicing — listen back to develop your hypnotic voice.</span></div>
+                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">7.</span><span>Star cards you want to return to.</span></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Card types</h3>
+                            <div class="space-y-2 text-gray-300 serif-font text-sm leading-relaxed">
+                                <p><span class="text-white font-bold">Dynamic cards</span> — Language patterns with two example sentences per theme. The pattern keyword appears in italics.</p>
+                                <p><span class="text-white font-bold">Static cards</span> — Full scripts for Triggers, Deepeners, Convincers, Pleasure Metaphors, and Empowerment Statements.</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Tips</h3>
+                            <p class="text-gray-300 serif-font text-sm leading-relaxed">Practice the same card across multiple themes to feel how the energy shifts. Start with Relaxation, then move to Desire or Wildness. Notice how your voice naturally changes.</p>
+                        </div>
+
+                        <div class="pt-2">
+                            <button onclick="promptInstallApp()" class="install-app-btn w-full py-3 rounded-2xl border border-purple-500/30 text-purple-200 text-sm hover:bg-purple-500/10 transition flex items-center justify-center gap-2 serif-font">
+                                <i data-lucide="download"></i> Install app to home screen
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+            updateInstallButtons();
+        }
+
+        function renderModeSelect() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="flex flex-col h-full p-6 bg-black/20">
+                    <div class="flex items-center mb-10 pt-4">
+                        <button onclick="renderWelcome()" class="p-3 bg-white/5 rounded-full hover:bg-white/10 transition"><i data-lucide="arrow-left"></i></button>
+                        <h2 class="text-2xl font-bold text-white ml-4 serif-font">Select Practice Mode</h2>
+                    </div>
+
+                    <div class="grid gap-6">
+                        <button onclick="startSession('all')" class="glass-panel p-8 rounded-3xl text-left hover:border-purple-500/50 transition relative overflow-hidden group">
+                            <div class="absolute -right-6 -bottom-6 text-white/5 group-hover:text-purple-500/10 transition-colors"><i data-lucide="layers" size="100"></i></div>
+                            <h3 class="text-2xl font-bold text-white mb-2 serif-font">Basic Deck</h3>
+                            <p class="serif-font text-gray-400 text-lg font-light leading-relaxed">
+                                A balanced deck without advanced topics (trigger words, deepeners, etc.).
+                            </p>
+                        </button>
+
+                        <button onclick="renderCategorySelect()" class="glass-panel p-8 rounded-3xl text-left hover:border-purple-500/50 transition relative overflow-hidden group">
+                            <div class="absolute -right-6 -bottom-6 text-white/5 group-hover:text-purple-500/10 transition-colors"><i data-lucide="list-filter" size="100"></i></div>
+                            <h3 class="text-2xl font-bold text-white mb-2 serif-font">Custom Deck</h3>
+                            <p class="serif-font text-gray-400 text-lg font-light leading-relaxed">Choose specific categories for focused practice.<br>Example: only 'Trigger Words' or 'Convincers'.</p>
+                        </button>
+                        
+                        <button onclick="renderRecordings()" class="glass-panel p-6 rounded-3xl text-left hover:border-purple-500/50 transition relative overflow-hidden group mt-4">
+                            <div class="flex items-center gap-4">
+                                <div class="p-3 rounded-full bg-white/5"><i data-lucide="mic"></i></div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-white serif-font">My Recordings</h3>
+                                    <p class="text-gray-500 text-xs">${AppState.recordings.length} saved recordings</p>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function renderCategorySelect() {
+            const app = document.getElementById('app');
+            AppState.selectedCategories = [];
+              
+            const catsHtml = AppState.categories.map(cat => `
+                <label class="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 cursor-pointer hover:bg-white/10 transition active:scale-95">
+                    <div class="flex items-center gap-4">
+                        <div class="w-4 h-4 rounded-full" style="background-color: ${cat.color}; box-shadow: 0 0 10px ${cat.color}"></div>
+                        <span class="text-white font-medium text-lg serif-font">${cat.name}</span>
+                    </div>
+                    <input type="checkbox" value="${cat.name}" onchange="toggleCategory('${cat.name}')" class="w-6 h-6 accent-purple-500 rounded bg-white/10 border-white/20">
+                </label>
+            `).join('');
+
+            app.innerHTML = `
+                <div class="flex flex-col h-full bg-[#050408]">
+                    <div class="p-6 pb-2 pt-8">
+                        <div class="flex items-center justify-between mb-4">
+                            <button onclick="renderModeSelect()" class="p-2 bg-white/5 rounded-full"><i data-lucide="arrow-left"></i></button>
+                            <h2 class="text-xl font-bold text-white serif-font">Filter Categories</h2>
+                            <div class="w-8"></div>
+                        </div>
+                    </div>
+                    <div class="flex-1 overflow-y-auto px-6 pb-32 space-y-3 no-scrollbar">
+                        ${catsHtml}
+                    </div>
+                    <div class="p-6 bg-gradient-to-t from-black via-black to-transparent absolute bottom-0 w-full z-20">
+                        <button onclick="startSession('custom')" class="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-2xl shadow-lg shadow-purple-900/40 transition transform active:scale-95 serif-font">
+                            Start Session
+                        </button>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function renderRecordings() {
+            const app = document.getElementById('app');
+            const listHtml = AppState.recordings.length   
+                ? AppState.recordings.map(rec => `
+                    <div class="bg-white/5 border border-white/10 p-4 rounded-xl flex justify-between items-center mb-3">
+                        <div>
+                            <div class="text-white font-bold serif-font">${rec.name}</div>
+                            <div class="text-xs text-gray-500">${rec.date} · ${rec.theme}</div>
+                        </div>
+                        <div class="p-2 bg-purple-600/20 text-purple-400 rounded-full">
+                            <i data-lucide="play" width="16"></i>
+                        </div>
+                    </div>`).join('')
+                : `<div class="text-center text-gray-500 mt-10">No saved recordings yet.</div>`;
+
+            app.innerHTML = `
+                <div class="flex flex-col h-full p-6 bg-[#0f0c15]">
+                    <div class="flex justify-between items-center mb-8 pt-4">
+                        <button onclick="renderModeSelect()" class="p-2 bg-white/10 rounded-full text-gray-300"><i data-lucide="arrow-left"></i></button>
+                        <h2 class="text-2xl font-bold text-white serif-font">My Archive</h2>
+                        <div class="w-8"></div>
+                    </div>
+                    <div class="overflow-y-auto no-scrollbar pb-10">${listHtml}</div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        // --- Category Descriptions (available immediately + enhanced from data sources) ---
+        let CATEGORY_INFO = normalizeCategoryInfoMap(DEFAULT_CATEGORY_INFO);
+
+        let cardFlipped = false;
+
+        function toggleCardFlip() {
+            ensureCategoryInfoLoaded().then(() => updatePlayerContent({ preserveFlip: true }));
+            const inner = document.getElementById('cardInner');
+            if (!inner) return;
+            cardFlipped = !cardFlipped;
+            inner.classList.toggle('flipped', cardFlipped);
+        }
+
+        // --- CORE PLAYER LOGIC ---
+
+        function renderPlayer() {
+            const app = document.getElementById('app');
+              
+            if (!document.getElementById('player-view')) {
+
+                app.innerHTML = `
+                    <div id="player-view" class="flex flex-col h-full relative overflow-hidden">
+                        <!-- Top Bar -->
+                        <div class="flex items-center justify-between p-4 z-20 pt-6">
+                            <button onclick="document.onkeydown=null; renderModeSelect()" class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-white/5" data-tip="Exit session"><i data-lucide="x"></i></button>
+                            <div id="counter" class="text-xs font-mono text-gray-600"></div>
+                            <button id="favBtn" onclick="toggleFavorite()" data-tip="Favorite this card" class="p-2 transition rounded-full hover:bg-white/5 text-gray-600">
+                                <i data-lucide="star"></i>
+                            </button>
+                        </div>
+
+                        <!-- Card Area -->
+                        <div class="flex-1 flex items-center justify-center p-4 perspective-1000 relative z-10 w-full max-w-lg mx-auto overflow-hidden">
+                            <!-- Navigation Zones with visible arrows -->
+                            <div class="card-nav-arrow absolute left-0 top-24 bottom-28 z-30 cursor-pointer flex items-center justify-center" onclick="prevCard()" data-tip="Previous card">
+                                <i data-lucide="chevron-left" style="width:22px;height:22px;color:rgba(255,255,255,0.2)"></i>
+                            </div>
+                            <div class="card-nav-arrow absolute right-0 top-24 bottom-28 z-30 cursor-pointer flex items-center justify-center" onclick="nextCard()">
+                                <i data-lucide="chevron-right" style="width:22px;height:22px;color:rgba(255,255,255,0.2)"></i>
+                            </div>
+
+                            <div class="card-inner w-full h-full pb-8" id="cardInner">
+                                <!-- Front face -->
+                                <div id="cardFace" class="card-face glass-panel border-t-4 transition-colors duration-500 flex flex-col">
+                                    <!-- Info button -->
+                                    <button class="info-btn" onclick="toggleCardFlip()" title="About this pattern">i</button>
+                                      
+                                    <!-- Sticky Header: Pattern Name -->
+                                    <div class="card-header-fixed">
+                                        <h2 id="cardPattern" class="text-4xl font-bold serif-font text-white drop-shadow-md leading-tight"></h2>
+                                    </div>
+
+                                    <!-- Scrollable Content -->
+                                    <div class="card-scroll-area">
+                                        <div class="card-content-wrapper">
+                                            <div id="cardContentText" class="card-content-text text-xl md:text-2xl text-gray-200 leading-relaxed font-light select-text transition-opacity duration-300 serif-font"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Sticky Footer: Category -->
+                                    <div class="card-footer-fixed">
+                                        <div id="cardCategory" class="text-sm uppercase tracking-widest font-bold opacity-80" style="font-family:'DM Mono',monospace"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Back face: Category Info -->
+                                <div id="cardBack" class="card-face-back flex flex-col">
+                                    <!-- Info button (back) -->
+                                    <button class="info-btn" onclick="toggleCardFlip()" title="Back to card">✕</button>
+
+                                    <div class="card-header-fixed" style="background:linear-gradient(to bottom,rgba(80,20,120,0.9),transparent)">
+                                        <p style="font-size:0.7rem;letter-spacing:0.15em;color:#a855f7;font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:0.5rem">Pattern Type</p>
+                                        <h2 id="backCategoryName" class="text-3xl font-bold serif-font text-white leading-tight"></h2>
+                                    </div>
+
+                                    <div class="card-scroll-area">
+                                        <div class="card-content-wrapper" style="text-align:left;padding:0.5rem 0.25rem">
+                                            <div style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);border-radius:0.75rem;padding:0.75rem 1rem;margin-bottom:1rem">
+                                                <p style="font-size:0.65rem;letter-spacing:0.12em;color:#a855f7;font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:0.4rem">Pattern Structure</p>
+                                                <p id="backPattern" class="serif-font" style="color:#e9d5ff;font-size:1rem;font-style:italic;line-height:1.5"></p>
+                                            </div>
+                                            <p id="backDescription" class="serif-font" style="color:#d1d5db;font-size:1.05rem;line-height:1.7"></p>
+                                        </div>
+                                    </div>
+
+                                    <div class="card-footer-fixed">
+                                        <p style="font-size:0.7rem;color:#6b7280;font-family:'DM Mono',monospace">Tap <em style="color:#a855f7">i</em> to return to the card</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Theme Selector with arrows -->
+                        <div class="shrink-0 flex items-center justify-center gap-2 px-2 pb-2" style="min-height:52px">
+                            <button onclick="shiftTheme(-1)" class="p-2 rounded-full bg-white/5 hover:bg-white/15 active:scale-90 transition text-gray-300 flex-shrink-0" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center">
+                                <i data-lucide="chevron-left" style="width:18px;height:18px"></i>
+                            </button>
+                            <div id="themeStrip" class="flex items-center justify-center gap-2" style="flex:1;max-width:280px"></div>
+                            <button onclick="shiftTheme(1)" class="p-2 rounded-full bg-white/5 hover:bg-white/15 active:scale-90 transition text-gray-300 flex-shrink-0" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center">
+                                <i data-lucide="chevron-right" style="width:18px;height:18px"></i>
+                            </button>
+                        </div>
+
+                        <!-- Bottom Controls -->
+                        <div class="p-4 pb-8 flex items-center justify-center gap-10 z-20 bg-gradient-to-t from-black/90 to-transparent shrink-0">
+                            <button onclick="prevCard()" data-tip="Previous card" class="p-4 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 active:scale-95 transition" style="min-width:52px;min-height:52px"><i data-lucide="chevron-left"></i></button>
+                              
+                            <button id="recordBtn" onclick="toggleRecording()" data-tip="Record your practice" class="p-5 rounded-full bg-purple-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all transform hover:scale-105 active:scale-95" style="min-width:60px;min-height:60px">
+                                <i data-lucide="mic"></i>
+                            </button>
+                              
+                            <button onclick="nextCard()" data-tip="Next card" class="p-4 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 active:scale-95 transition" style="min-width:52px;min-height:52px"><i data-lucide="chevron-right"></i></button>
+                        </div>
+                    </div>
+                `;
+                lucide.createIcons();
+            }
+
+            updatePlayerContent();
+            setupKeyboard();
+            setupSwipe();
+        }
+
+        function setupKeyboard() {
+            document.onkeydown = function(e) {
+                if (e.key === 'ArrowRight') nextCard();
+                if (e.key === 'ArrowLeft')  prevCard();
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const scrollArea = document.querySelector('.card-scroll-area');
+                    if (scrollArea) scrollArea.scrollBy({ top: e.key === 'ArrowDown' ? 80 : -80, behavior: 'smooth' });
+                }
+            };
+        }
+
+        function setupSwipe() {
+            const area = document.getElementById('player-view');
+            if (!area) return;
+            let startX = 0, startY = 0;
+            area.addEventListener('touchstart', e => {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            }, { passive: true });
+            area.addEventListener('touchend', e => {
+                const dx = e.changedTouches[0].clientX - startX;
+                const dy = e.changedTouches[0].clientY - startY;
+                if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+                    dx < 0 ? nextCard() : prevCard();
+                }
+            }, { passive: true });
+        }
+
+        // --- Theme strip (arrow navigation, infinite wrap) ---
+        function buildThemeStrip(card) {
+            const strip = document.getElementById('themeStrip');
+            if (!strip) return;
+            const themes = AppState.themes;
+            const n = themes.length;
+            const activeIdx = themes.indexOf(AppState.currentTheme);
+
+            strip.innerHTML = '';
+
+            // Show prev, active, next — always 3 items, active in center
+            [-1, 0, 1].forEach(offset => {
+                const idx = ((activeIdx + offset) % n + n) % n;
+                const t = themes[idx];
+                const isActive = offset === 0;
+
+                const div = document.createElement('div');
+                div.className = 'carousel-item' + (isActive ? ' active' : '');
+                div.dataset.theme = t;
+                div.textContent = t;
+                div.onclick = () => setTheme(t);
+
+                if (isActive && card) {
+                    div.style.borderColor = card.color;
+                    div.style.color = card.color;
+                    div.style.backgroundColor = 'rgba(255,255,255,0.08)';
+                    div.style.boxShadow = `0 0 12px ${card.color}40`;
+                    div.style.opacity = '1';
+                    div.style.transform = 'scale(1.08)';
+                    div.style.fontWeight = 'bold';
+                }
+
+                strip.appendChild(div);
+            });
+        }
+
+        function shiftTheme(dir) {
+            const themes = AppState.themes;
+            const n = themes.length;
+            const activeIdx = themes.indexOf(AppState.currentTheme);
+            const newIdx = ((activeIdx + dir) % n + n) % n;
+            setTheme(themes[newIdx]);
+        }
+
+        function updatePlayerContent(options = {}) {
+            const preserveFlip = !!options.preserveFlip;
+            // Reset flip when changing cards
+            if (!preserveFlip && cardFlipped) {
+                cardFlipped = false;
+                const inner = document.getElementById('cardInner');
+                if (inner) inner.classList.remove('flipped');
+            }
+
+            const card = getCurrentCard();
+            const rawContent = getCardContent(card, AppState.currentTheme);
+            const content = renderMarkdown(rawContent);
+            const isFav = AppState.favorites.includes(card.id);
+
+            document.getElementById('cardPattern').innerText = card.pattern;
+            document.getElementById('cardCategory').innerText = card.category;
+            document.getElementById('cardCategory').style.color = card.color;
+            document.getElementById('cardFace').style.borderColor = card.color;
+              
+            const contentDiv = document.getElementById('cardContentText');
+            contentDiv.innerHTML = content;
+
+            // Update back face
+            const info = {
+                pattern: String(card.infoPattern || '').trim(),
+                description: String(card.infoDescription || '').trim()
+            };
+            const backCategoryName = document.getElementById('backCategoryName');
+            const backPattern = document.getElementById('backPattern');
+            const backDescription = document.getElementById('backDescription');
+            backCategoryName.innerText = card.category || 'General';
+            backPattern.innerText = (info && info.pattern) ? info.pattern : 'No pattern structure is available for this category yet.';
+            backDescription.innerText = (info && info.description) ? info.description : 'Category notes are not available yet. You can still use the front side examples for guided practice.';
+
+            document.getElementById('counter').innerText = `${AppState.currentIndex + 1} / ${AppState.activeDeck.length}`;
+            const favBtn = document.getElementById('favBtn');
+            favBtn.className = `p-2 transition rounded-full hover:bg-white/5 ${isFav ? 'text-yellow-400' : 'text-gray-600'}`;
+            favBtn.querySelector('svg').setAttribute('fill', isFav ? 'currentColor' : 'none');
+
+            buildThemeStrip(card);
+        }
+
+        // --- 5. Interaction Handlers ---
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const csv = e.target.result;
+                Papa.parse(csv, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        processCSV(results.data);
+                    }
+                });
+            };
+            reader.readAsText(file);
+        }
+
+        function setTheme(theme) {
+            AppState.currentTheme = theme;
+              
+            const contentDiv = document.getElementById('cardContentText');
+            contentDiv.style.opacity = '0';
+            contentDiv.style.transform = 'translateY(5px)';
+              
+            setTimeout(() => {
+                updatePlayerContent();
+                contentDiv.style.transition = 'all 0.3s ease';
+                contentDiv.style.opacity = '1';
+                contentDiv.style.transform = 'translateY(0)';
+            }, 150);
+        }
+
+        function nextCard() {
+            const cardInner = document.querySelector('.card-face');
+            cardInner.classList.add('slide-out-left');
+              
+            setTimeout(() => {
+                AppState.currentIndex = (AppState.currentIndex + 1) % AppState.activeDeck.length;
+                updatePlayerContent();
+                  
+                cardInner.classList.remove('slide-out-left');
+                cardInner.classList.add('slide-in-right');
+                setTimeout(() => cardInner.classList.remove('slide-in-right'), 300);
+            }, 250);
+        }
+
+        function prevCard() {
+            const cardInner = document.querySelector('.card-face');
+            cardInner.classList.add('slide-out-right');
+              
+            setTimeout(() => {
+                AppState.currentIndex = (AppState.currentIndex - 1 + AppState.activeDeck.length) % AppState.activeDeck.length;
+                updatePlayerContent();
+
+                cardInner.classList.remove('slide-out-right');
+                cardInner.classList.add('slide-in-left');
+                setTimeout(() => cardInner.classList.remove('slide-in-left'), 300);
+            }, 250);
+        }
+
+        function toggleCategory(catName) {
+            if (AppState.selectedCategories.includes(catName)) {
+                AppState.selectedCategories = AppState.selectedCategories.filter(c => c !== catName);
+            } else {
+                AppState.selectedCategories.push(catName);
+            }
+        }
+
+        function toggleFavorite() {
+            const card = getCurrentCard();
+            const idx = AppState.favorites.indexOf(card.id);
+            if (idx > -1) AppState.favorites.splice(idx, 1);
+            else AppState.favorites.push(card.id);
+            localStorage.setItem('en_favorites_v1', JSON.stringify(AppState.favorites));
+            updatePlayerContent();
+        }
+
+        let mediaRecorder = null;
+        let audioChunks = [];
+
+        function toggleRecording() {
+            AppState.isRecording = !AppState.isRecording;
+            const btn = document.getElementById('recordBtn');
+
+            if (AppState.isRecording) {
+                // Start recording
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        audioChunks = [];
+                        mediaRecorder = new MediaRecorder(stream);
+                        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+                        mediaRecorder.start();
+
+                        btn.classList.remove('bg-purple-600', 'text-white', 'shadow-[0_0_20px_rgba(147,51,234,0.3)]');
+                        btn.classList.add('recording-pulse', 'bg-red-500/10', 'border', 'border-red-500');
+                        btn.innerHTML = '<i data-lucide="square"></i>';
+                        lucide.createIcons();
+                    })
+                    .catch(() => {
+                        AppState.isRecording = false;
+                        alert('Microphone access denied. Please allow microphone access and try again.');
+                    });
+
+            } else {
+                // Stop and download
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const now = new Date();
+                        const pad = n => String(n).padStart(2, '0');
+                        const dateStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+                        const timeStr = `${pad(now.getHours())}-${pad(now.getMinutes())}`;
+                        const filename = `Hypnotic-Language-Practice_${dateStr}_${timeStr}.webm`;
+
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        a.click();
+                        URL.revokeObjectURL(url);
+
+                        // Save metadata to archive
+                        const card = getCurrentCard();
+                        AppState.recordings.unshift({
+                            id: Date.now(),
+                            name: filename,
+                            date: `${dateStr} ${pad(now.getHours())}:${pad(now.getMinutes())}`,
+                            pattern: card.pattern,
+                            theme: AppState.currentTheme
+                        });
+                        localStorage.setItem('en_recordings_v1', JSON.stringify(AppState.recordings));
+
+                        // Stop all tracks
+                        mediaRecorder.stream.getTracks().forEach(t => t.stop());
+                    };
+                    mediaRecorder.stop();
+                }
+
+                btn.classList.add('bg-purple-600', 'text-white', 'shadow-[0_0_20px_rgba(147,51,234,0.3)]');
+                btn.classList.remove('recording-pulse', 'bg-red-500/10', 'border', 'border-red-500');
+                btn.innerHTML = '<i data-lucide="mic"></i>';
+                lucide.createIcons();
+            }
+        }
+
+        function clearData() {
+            if (confirm('This will delete all data including favorites and recordings.\nContinue?')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        window.addEventListener('beforeinstallprompt', e => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            updateInstallButtons();
+        });
+
+        window.addEventListener('appinstalled', () => {
+            deferredInstallPrompt = null;
+            updateInstallButtons();
+        });
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
+            });
+        }
+
+        ensureCategoryInfoLoaded().finally(() => {
+            renderWelcome();
+        });
+
+    </script>
+</body>
+</html>
