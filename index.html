@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="HypnoCards">
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
     <title>HypnoCards - Master Edition V6</title>
     
     <!-- Libraries -->
@@ -539,6 +539,10 @@
             return /iphone|ipad|ipod/i.test(navigator.userAgent);
         }
 
+        function isAndroid() {
+            return /android/i.test(navigator.userAgent);
+        }
+
         function updateInstallButtons() {
             const installButtons = document.querySelectorAll('.install-app-btn');
             installButtons.forEach(btn => {
@@ -550,6 +554,10 @@
                     btn.style.display = 'flex';
                     btn.disabled = false;
                     btn.innerText = 'How to add app to home screen';
+                } else if (isAndroid()) {
+                    btn.style.display = 'flex';
+                    btn.disabled = false;
+                    btn.innerText = 'Install app (manual steps)';
                 } else {
                     btn.style.display = 'flex';
                     btn.disabled = false;
@@ -574,7 +582,12 @@
                 return;
             }
 
-            alert('Install is not available yet. Open the app from its web URL in Chrome/Edge and try again.');
+            if (isAndroid()) {
+                alert('To install on Android Chrome:\n1. Open browser menu (3 dots)\n2. Tap "Add to Home screen" or "Install app"\n3. Confirm "Install"');
+                return;
+            }
+
+            alert('Install prompt is not available yet in this browser. Try Chrome/Edge on Android, or use your browser menu: Add to Home Screen.');
         }
 
         function startSession(mode) {

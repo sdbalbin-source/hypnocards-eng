@@ -1,5 +1,5 @@
-const CACHE = 'hypnocards-v3';
-const ASSETS = ['/', '/index.html', '/cards_data.json', '/manifest.json'];
+const CACHE = 'hypnocards-v4';
+const ASSETS = ['/', '/index.html', '/cards_data.json', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
 self.addEventListener('install', e => {
   self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
