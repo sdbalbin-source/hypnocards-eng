@@ -553,6 +553,10 @@
             return /android/i.test(navigator.userAgent);
         }
 
+        function isInstalledApp() {
+            return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        }
+
         function isCanonicalOrigin() {
             return window.location.origin === CANONICAL_ORIGIN;
         }
@@ -564,7 +568,11 @@
         function updateInstallButtons() {
             const installButtons = document.querySelectorAll('.install-app-btn');
             installButtons.forEach(btn => {
-                if (deferredInstallPrompt) {
+                if (isInstalledApp()) {
+                    btn.style.display = 'flex';
+                    btn.disabled = true;
+                    btn.innerText = 'App already installed';
+                } else if (deferredInstallPrompt) {
                     btn.style.display = 'flex';
                     btn.disabled = false;
                     btn.innerText = 'Install app to home screen';
@@ -585,6 +593,11 @@
         }
 
         async function promptInstallApp() {
+            if (isInstalledApp()) {
+                alert('The app is already installed on this device.');
+                return;
+            }
+
             if (deferredInstallPrompt) {
                 deferredInstallPrompt.prompt();
                 const choice = await deferredInstallPrompt.userChoice;
@@ -851,14 +864,12 @@
             const listHtml = AppState.recordings.length   
                 ? AppState.recordings.map(rec => `
                     <div class="bg-white/5 border border-white/10 p-4 rounded-xl flex justify-between items-center mb-3">
-                        <div>
+                        <div style="flex:1;min-width:0">
                             <div class="text-white font-bold serif-font">${rec.name}</div>
                             <div class="text-xs text-gray-500">${rec.date} · ${rec.theme}</div>
+                            ${rec.audioDataUrl ? `<audio controls preload="metadata" src="${rec.audioDataUrl}" class="mt-2 w-full"></audio>` : `<div class="mt-2 text-[0.7rem] text-amber-300">Playable audio is not available for this item.</div>`}
                         </div>
                         <div class="flex items-center gap-2">
-                            <button onclick="playRecording(${rec.id})" class="p-2 bg-purple-600/20 text-purple-400 rounded-full hover:bg-purple-600/30 transition ${rec.audioDataUrl ? '' : 'opacity-40'}" ${rec.audioDataUrl ? '' : 'disabled'}>
-                                <i data-lucide="play" width="16"></i>
-                            </button>
                             <button onclick="deleteRecording(${rec.id})" class="p-2 bg-red-500/10 text-red-300 rounded-full hover:bg-red-500/20 transition">
                                 <i data-lucide="trash-2" width="16"></i>
                             </button>
@@ -879,31 +890,10 @@
             lucide.createIcons();
         }
 
-        let currentPlaybackAudio = null;
-        function playRecording(recordingId) {
-            const rec = AppState.recordings.find(r => r.id === recordingId);
-            if (!rec || !rec.audioDataUrl) {
-                alert('This recording does not have playable audio data.');
-                return;
-            }
-            if (currentPlaybackAudio) {
-                currentPlaybackAudio.pause();
-                currentPlaybackAudio.currentTime = 0;
-            }
-            currentPlaybackAudio = new Audio(rec.audioDataUrl);
-            currentPlaybackAudio.play().catch(() => {
-                alert('Could not play this recording on this device.');
-            });
-        }
-
         function deleteRecording(recordingId) {
             const rec = AppState.recordings.find(r => r.id === recordingId);
             if (!rec) return;
             if (!confirm(`Delete recording "${rec.name}"?`)) return;
-            if (currentPlaybackAudio) {
-                currentPlaybackAudio.pause();
-                currentPlaybackAudio.currentTime = 0;
-            }
             AppState.recordings = AppState.recordings.filter(r => r.id !== recordingId);
             localStorage.setItem('en_recordings_v1', JSON.stringify(AppState.recordings));
             renderRecordings();
@@ -1011,14 +1001,14 @@
                         </div>
 
                         <!-- Bottom Controls -->
-                        <div class="p-4 pb-8 flex items-center justify-center gap-10 z-20 bg-gradient-to-t from-black/90 to-transparent shrink-0">
-                            <button onclick="prevCard()" data-tip="Previous card" class="p-4 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 active:scale-95 transition" style="min-width:52px;min-height:52px"><i data-lucide="chevron-left"></i></button>
+                        <div class="px-4 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] flex items-center justify-center gap-6 sm:gap-10 z-20 bg-gradient-to-t from-black/90 to-transparent shrink-0">
+                            <button onclick="prevCard()" data-tip="Previous card" class="p-3 sm:p-4 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 active:scale-95 transition" style="min-width:48px;min-height:48px"><i data-lucide="chevron-left"></i></button>
                               
-                            <button id="recordBtn" onclick="toggleRecording()" data-tip="Record your practice" class="p-5 rounded-full bg-purple-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all transform hover:scale-105 active:scale-95" style="min-width:60px;min-height:60px">
+                            <button id="recordBtn" onclick="toggleRecording()" data-tip="Record your practice" class="p-4 sm:p-5 rounded-full bg-purple-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all transform hover:scale-105 active:scale-95" style="min-width:56px;min-height:56px">
                                 <i data-lucide="mic"></i>
                             </button>
                               
-                            <button onclick="nextCard()" data-tip="Next card" class="p-4 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 active:scale-95 transition" style="min-width:52px;min-height:52px"><i data-lucide="chevron-right"></i></button>
+                            <button onclick="nextCard()" data-tip="Next card" class="p-3 sm:p-4 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 active:scale-95 transition" style="min-width:48px;min-height:48px"><i data-lucide="chevron-right"></i></button>
                         </div>
                     </div>
                 `;
@@ -1236,6 +1226,7 @@
         let monitorAnimationFrame = null;
 
         function getRecordingFormat() {
+            const probeAudio = document.createElement('audio');
             const candidates = [
                 { mimeType: 'audio/webm;codecs=opus', ext: 'webm' },
                 { mimeType: 'audio/mp4', ext: 'm4a' },
@@ -1243,7 +1234,9 @@
                 { mimeType: 'audio/ogg;codecs=opus', ext: 'ogg' }
             ];
             for (const format of candidates) {
-                if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(format.mimeType)) {
+                const canRecord = window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(format.mimeType);
+                const canPlay = !format.mimeType || !!probeAudio.canPlayType(format.mimeType);
+                if (canRecord && canPlay) {
                     return format;
                 }
             }
@@ -1296,7 +1289,13 @@
 
             if (AppState.isRecording) {
                 // Start recording
-                navigator.mediaDevices.getUserMedia({ audio: true })
+                navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                })
                     .then(stream => {
                         recordingStream = stream;
                         audioChunks = [];
@@ -1304,8 +1303,8 @@
                         recordingMimeType = format.mimeType;
                         recordingExtension = format.ext;
                         mediaRecorder = recordingMimeType ? new MediaRecorder(stream, { mimeType: recordingMimeType }) : new MediaRecorder(stream);
-                        mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-                        mediaRecorder.start();
+                        mediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) audioChunks.push(e.data); };
+                        mediaRecorder.start(250);
 
                         btn.classList.remove('bg-purple-600', 'text-white', 'shadow-[0_0_20px_rgba(147,51,234,0.3)]');
                         btn.classList.add('recording-pulse', 'recording-live', 'bg-red-500/10', 'border', 'border-red-500');
@@ -1324,7 +1323,7 @@
                     mediaRecorder.onstop = () => {
                         const blobType = recordingMimeType || mediaRecorder.mimeType || 'audio/webm';
                         const blob = new Blob(audioChunks, { type: blobType });
-                        if (blob.size === 0) {
+                        if (blob.size < 1024) {
                             alert('Recording is empty. Please check microphone permissions and try again.');
                             return;
                         }
@@ -1376,6 +1375,9 @@
                         if (recordingStream) recordingStream.getTracks().forEach(t => t.stop());
                         recordingStream = null;
                     };
+                    if (mediaRecorder.state === 'recording') {
+                        try { mediaRecorder.requestData(); } catch (e) {}
+                    }
                     mediaRecorder.stop();
                 }
 
