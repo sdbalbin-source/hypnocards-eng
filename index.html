@@ -321,10 +321,21 @@
             isRecording: false,
               
             recordings: JSON.parse(localStorage.getItem('en_recordings_v1')) || [],
+            archetypeFavorites: JSON.parse(localStorage.getItem('archetype_favorites_v1')) || [],
               
             selectedCategories: []
         };
         let deferredInstallPrompt = null;
+        const ARCHETYPE_MODULE_TITLE = 'Archetypes of Pleasure';
+        const ARCHETYPE_CARD_BACK = 'icons/icon cards.png';
+        const ARCHETYPES_DATA = [
+            { id: 'archetype-1', name: 'The Muse', image: '', summary: 'Invites inspiration, sensitivity, and curiosity in erotic dynamics.', guidance: 'Use this archetype when you want to lead through subtle invitation and aesthetic tension.' },
+            { id: 'archetype-2', name: 'The Sovereign', image: '', summary: 'Centers authority, boundaries, and confident command.', guidance: 'Use this archetype when setting structure, ritual, and clear consent frameworks.' },
+            { id: 'archetype-3', name: 'The Devotee', image: '', summary: 'Embodies surrender, service, and meaningful offering.', guidance: 'Use this archetype to explore intentional submission and devotional focus.' },
+            { id: 'archetype-4', name: 'The Trickster', image: '', summary: 'Brings play, misdirection, teasing, and surprise.', guidance: 'Use this archetype to shift stuck energy with humor, chaos, and novelty.' },
+            { id: 'archetype-5', name: 'The Healer', image: '', summary: 'Holds restoration, aftercare, and emotional regulation.', guidance: 'Use this archetype to build trust, safety, and integration after intensity.' },
+            { id: 'archetype-6', name: 'The Wild One', image: '', summary: 'Channels primal expression, instinct, and embodied intensity.', guidance: 'Use this archetype when you want to explore raw energy while honoring negotiated limits.' }
+        ];
 
         function normalizeCategoryKey(category) {
             return String(category || '').trim().replace(/\s+/g, ' ').toLowerCase();
@@ -710,17 +721,23 @@
                 <div class="flex flex-col items-center justify-center h-full p-6 text-center relative z-10">
                     <div class="mb-8 relative">
                         <div class="absolute inset-0 bg-purple-500 blur-3xl opacity-20 rounded-full animate-pulse"></div>
-                        <h1 class="text-6xl font-bold serif-font text-white mb-2 tracking-tighter relative z-10">Hypno</h1>
-                        <h1 class="text-6xl font-bold serif-font text-purple-400 mb-4 tracking-tighter relative z-10">Cards</h1>
-                        <p class="text-gray-400 mt-2 text-sm tracking-widest uppercase" style="font-family:'DM Mono',monospace">Master Edition</p>
+                        <h1 class="text-5xl font-bold serif-font text-white mb-2 tracking-tight relative z-10">Pleasure Practice</h1>
+                        <h1 class="text-5xl font-bold serif-font text-purple-400 mb-4 tracking-tight relative z-10">Studio</h1>
+                        <p class="text-gray-400 mt-2 text-xs tracking-[0.25em] uppercase" style="font-family:'DM Mono',monospace">Three integrated practice tools</p>
                     </div>
 
-                    <button onclick="renderModeSelect()" class="w-full max-w-xs py-5 bg-white/10 border border-white/20 rounded-2xl text-white text-xl font-bold hover:bg-white/20 transition-all mb-4 flex items-center justify-center gap-3 shadow-lg shadow-purple-900/20 serif-font">
-                        <i data-lucide="play-circle"></i> Start Practice
+                    <button onclick="renderModeSelect()" class="w-full max-w-sm py-4 bg-white/10 border border-white/20 rounded-2xl text-white text-lg font-bold hover:bg-white/20 transition-all mb-3 flex items-center justify-center gap-3 shadow-lg shadow-purple-900/20 serif-font text-left">
+                        <i data-lucide="sparkles"></i> Hypnoerotic Language Cards
+                    </button>
+                    <button onclick="renderArchetypesHome()" class="w-full max-w-sm py-4 bg-white/10 border border-white/20 rounded-2xl text-white text-lg font-bold hover:bg-white/20 transition-all mb-3 flex items-center justify-center gap-3 shadow-lg shadow-purple-900/20 serif-font text-left">
+                        <i data-lucide="gallery-vertical-end"></i> Archetypes of Pleasure
+                    </button>
+                    <button onclick="renderKinkyScenePlannerHome()" class="w-full max-w-sm py-4 bg-white/10 border border-white/20 rounded-2xl text-white text-lg font-bold hover:bg-white/20 transition-all mb-5 flex items-center justify-center gap-3 shadow-lg shadow-purple-900/20 serif-font text-left">
+                        <i data-lucide="clipboard-check"></i> Kinky Scene Planner
                     </button>
 
                     <button onclick="showAbout()" class="w-full max-w-xs py-3 rounded-2xl border border-purple-500/20 text-purple-300 text-sm hover:bg-purple-500/10 transition flex items-center justify-center gap-2 serif-font">
-                        <i data-lucide="info"></i> About & How to Use
+                        <i data-lucide="info"></i> General About
                     </button>
 
                     <button onclick="clearData()" class="absolute bottom-6 text-xs text-gray-600 hover:text-red-400 transition opacity-60 hover:opacity-100">Reset all data</button>
@@ -738,39 +755,36 @@
                 <div class="flex flex-col h-full bg-[#050408]">
                     <div class="p-6 pt-8 flex items-center gap-4">
                         <button onclick="renderWelcome()" class="p-2 bg-white/5 rounded-full"><i data-lucide="arrow-left"></i></button>
-                        <h2 class="text-2xl font-bold text-white serif-font">About HypnoCards</h2>
+                        <h2 class="text-2xl font-bold text-white serif-font">About Pleasure Practice Studio</h2>
                     </div>
                     <div class="flex-1 overflow-y-auto px-6 pb-10 space-y-6 no-scrollbar">
 
                         <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
                             <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">What is this?</h3>
-                            <p class="text-gray-300 serif-font text-base leading-relaxed">HypnoCards is a practice tool for hypnotic language patterns. Each card contains a pattern structure with example sentences across different emotional themes — helping you internalize the language of trance.</p>
+                            <p class="text-gray-300 serif-font text-base leading-relaxed">Pleasure Practice Studio combines three training spaces in one app: language cards, archetype cards, and a collaborative scene planner. Use one module at a time, or combine them into a complete preparation workflow.</p>
                         </div>
 
                         <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
                             <h3 class="text-purple-300 font-bold text-lg serif-font mb-3">How to use</h3>
                             <div class="space-y-3 text-gray-300 serif-font text-base leading-relaxed">
-                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">1.</span><span>Choose a deck — <em>Basic</em> for core language patterns, or <em>Custom</em> to focus on specific categories.</span></div>
-                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">2.</span><span>Each card shows a <strong class="text-white">pattern name</strong> at the top. Read it, feel it, then practice saying it aloud.</span></div>
-                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">3.</span><span>Swipe left/right or use the arrows to move between cards.</span></div>
-                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">4.</span><span>Change the <strong class="text-white">theme</strong> (Relaxation, Desire, Joy...) at the bottom to see how the same pattern feels in different contexts.</span></div>
-                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">5.</span><span>Tap <strong class="text-white">i</strong> on the card to read about the pattern type and its use in trance.</span></div>
-                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">6.</span><span>Use the <strong class="text-white">microphone</strong> to record yourself practicing — listen back to develop your hypnotic voice.</span></div>
-                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">7.</span><span>Star cards you want to return to.</span></div>
+                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">1.</span><span>Open <strong class="text-white">Hypnoerotic Language Cards</strong> to train language patterns and voice flow.</span></div>
+                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">2.</span><span>Use <strong class="text-white">Archetypes of Pleasure</strong> to draw inspiration or consciously choose a specific archetype card.</span></div>
+                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">3.</span><span>Use <strong class="text-white">Kinky Scene Planner</strong> to align boundaries, intentions, and practical scene details with your partner.</span></div>
+                                <div class="flex gap-3"><span class="text-purple-400 font-bold shrink-0">4.</span><span>Return to the main home anytime to switch modules.</span></div>
                             </div>
                         </div>
 
                         <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
-                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Card types</h3>
+                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Design principle</h3>
                             <div class="space-y-2 text-gray-300 serif-font text-sm leading-relaxed">
-                                <p><span class="text-white font-bold">Dynamic cards</span> — Language patterns with two example sentences per theme. The pattern keyword appears in italics.</p>
-                                <p><span class="text-white font-bold">Static cards</span> — Full scripts for Triggers, Deepeners, Convincers, Pleasure Metaphors, and Empowerment Statements.</p>
+                                <p><span class="text-white font-bold">Depth + flexibility:</span> fast random inspiration when needed, plus conscious selection when precision matters.</p>
+                                <p><span class="text-white font-bold">Practice-ready:</span> every module includes contextual guidance and purpose-based flow.</p>
                             </div>
                         </div>
 
                         <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
                             <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Tips</h3>
-                            <p class="text-gray-300 serif-font text-sm leading-relaxed">Practice the same card across multiple themes to feel how the energy shifts. Start with Relaxation, then move to Desire or Wildness. Notice how your voice naturally changes.</p>
+                            <p class="text-gray-300 serif-font text-sm leading-relaxed">Build rituals: choose an archetype, practice matching language cards, then finalize details in the planner. Repetition across these three layers creates consistency and confidence.</p>
                         </div>
 
                         <div class="pt-2">
@@ -794,13 +808,202 @@
             updateInstallButtons();
         }
 
+        function showHypnoAbout() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="flex flex-col h-full bg-[#050408]">
+                    <div class="p-6 pt-8 flex items-center gap-4">
+                        <button onclick="renderModeSelect()" class="p-2 bg-white/5 rounded-full"><i data-lucide="arrow-left"></i></button>
+                        <h2 class="text-2xl font-bold text-white serif-font">About Hypnoerotic Language Cards</h2>
+                    </div>
+                    <div class="flex-1 overflow-y-auto px-6 pb-10 space-y-6 no-scrollbar">
+                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+                            <p class="text-gray-300 serif-font text-base leading-relaxed">This module helps you internalize hypnotic erotic language patterns through repetition, theme variation, and embodied vocal practice.</p>
+                        </div>
+                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Usage</h3>
+                            <p class="text-gray-300 serif-font text-sm leading-relaxed">Use Basic or Custom deck, switch themes to adapt tone, flip cards for category explanation, and record short drills to improve delivery.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function showArchetypesAbout() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="flex flex-col h-full bg-[#050408]">
+                    <div class="p-6 pt-8 flex items-center gap-4">
+                        <button onclick="renderArchetypesHome()" class="p-2 bg-white/5 rounded-full"><i data-lucide="arrow-left"></i></button>
+                        <h2 class="text-2xl font-bold text-white serif-font">About Archetypes of Pleasure</h2>
+                    </div>
+                    <div class="flex-1 overflow-y-auto px-6 pb-10 space-y-6 no-scrollbar">
+                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+                            <p class="text-gray-300 serif-font text-base leading-relaxed">This module combines visual archetype cards with concise guidance. Draw cards randomly for inspiration or browse consciously when you need a specific energetic frame.</p>
+                        </div>
+                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Usage</h3>
+                            <p class="text-gray-300 serif-font text-sm leading-relaxed">Use Shuffle & Draw for spontaneous prompts, All Cards for deliberate choice, and Favorites to keep your working set easy to revisit.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function showPlannerAbout() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="flex flex-col h-full bg-[#050408]">
+                    <div class="p-6 pt-8 flex items-center gap-4">
+                        <button onclick="renderKinkyScenePlannerHome()" class="p-2 bg-white/5 rounded-full"><i data-lucide="arrow-left"></i></button>
+                        <h2 class="text-2xl font-bold text-white serif-font">About Kinky Scene Planner</h2>
+                    </div>
+                    <div class="flex-1 overflow-y-auto px-6 pb-10 space-y-6 no-scrollbar">
+                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+                            <p class="text-gray-300 serif-font text-base leading-relaxed">The planner is your structured conversation space for consent, boundaries, desired intensity, and practical setup before a scene.</p>
+                        </div>
+                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Usage</h3>
+                            <p class="text-gray-300 serif-font text-sm leading-relaxed">Use it with a partner to create a shared map, then export or share your agreed scene outline. We will wire your existing planner code into this module next.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function renderArchetypesHome() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="flex flex-col h-full p-6 bg-black/20">
+                    <div class="flex items-center justify-between mb-8 pt-4">
+                        <button onclick="renderWelcome()" class="p-3 bg-white/5 rounded-full hover:bg-white/10 transition"><i data-lucide="arrow-left"></i></button>
+                        <h2 class="text-2xl font-bold text-white serif-font">${ARCHETYPE_MODULE_TITLE}</h2>
+                        <button onclick="showArchetypesAbout()" class="p-2 bg-white/5 rounded-full hover:bg-white/10 transition"><i data-lucide="info"></i></button>
+                    </div>
+                    <div class="grid gap-4">
+                        <button onclick="drawRandomArchetype()" class="glass-panel p-6 rounded-3xl text-left hover:border-purple-500/50 transition">
+                            <h3 class="text-xl font-bold text-white serif-font mb-1">Shuffle & Draw</h3>
+                            <p class="text-gray-400 serif-font text-base">Randomly draw one archetype card.</p>
+                        </button>
+                        <button onclick="renderArchetypesList(false)" class="glass-panel p-6 rounded-3xl text-left hover:border-purple-500/50 transition">
+                            <h3 class="text-xl font-bold text-white serif-font mb-1">All Cards</h3>
+                            <p class="text-gray-400 serif-font text-base">Browse all archetypes and choose consciously.</p>
+                        </button>
+                        <button onclick="renderArchetypesList(true)" class="glass-panel p-6 rounded-3xl text-left hover:border-purple-500/50 transition">
+                            <h3 class="text-xl font-bold text-white serif-font mb-1">Favorites</h3>
+                            <p class="text-gray-400 serif-font text-base">${AppState.archetypeFavorites.length} saved cards.</p>
+                        </button>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function drawRandomArchetype() {
+            if (!ARCHETYPES_DATA.length) return alert('No archetype cards loaded yet.');
+            const idx = Math.floor(Math.random() * ARCHETYPES_DATA.length);
+            renderArchetypeCard(ARCHETYPES_DATA[idx].id, 'random');
+        }
+
+        function renderArchetypesList(onlyFavorites) {
+            const app = document.getElementById('app');
+            const source = onlyFavorites
+                ? ARCHETYPES_DATA.filter(c => AppState.archetypeFavorites.includes(c.id))
+                : ARCHETYPES_DATA;
+            const rows = source.length
+                ? source.map(card => `
+                    <button onclick="renderArchetypeCard('${card.id}', '${onlyFavorites ? 'favorites' : 'all'}')" class="w-full text-left bg-white/5 border border-white/10 hover:border-purple-500/40 rounded-2xl p-4 transition">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <div class="text-white font-bold serif-font text-lg">${card.name}</div>
+                                <div class="text-gray-400 text-sm">${card.summary}</div>
+                            </div>
+                            <div class="text-purple-300">${AppState.archetypeFavorites.includes(card.id) ? '★' : '☆'}</div>
+                        </div>
+                    </button>
+                `).join('')
+                : `<div class="text-center text-gray-500 mt-10">No cards to display.</div>`;
+            app.innerHTML = `
+                <div class="flex flex-col h-full bg-[#050408]">
+                    <div class="p-6 pt-8 flex items-center gap-4">
+                        <button onclick="renderArchetypesHome()" class="p-2 bg-white/5 rounded-full"><i data-lucide="arrow-left"></i></button>
+                        <h2 class="text-2xl font-bold text-white serif-font">${onlyFavorites ? 'Favorite Archetypes' : 'All Archetypes'}</h2>
+                    </div>
+                    <div class="flex-1 overflow-y-auto px-6 pb-10 space-y-3 no-scrollbar">${rows}</div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function toggleArchetypeFavorite(cardId) {
+            if (AppState.archetypeFavorites.includes(cardId)) {
+                AppState.archetypeFavorites = AppState.archetypeFavorites.filter(id => id !== cardId);
+            } else {
+                AppState.archetypeFavorites.unshift(cardId);
+            }
+            localStorage.setItem('archetype_favorites_v1', JSON.stringify(AppState.archetypeFavorites));
+        }
+
+        function renderArchetypeCard(cardId, fromView) {
+            const card = ARCHETYPES_DATA.find(c => c.id === cardId);
+            if (!card) return;
+            const isFav = AppState.archetypeFavorites.includes(card.id);
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="flex flex-col h-full bg-[#050408]">
+                    <div class="p-6 pt-8 flex items-center justify-between">
+                        <button onclick="${fromView === 'favorites' ? 'renderArchetypesList(true)' : fromView === 'all' ? 'renderArchetypesList(false)' : 'renderArchetypesHome()'}" class="p-2 bg-white/5 rounded-full"><i data-lucide="arrow-left"></i></button>
+                        <button onclick="toggleArchetypeFavorite('${card.id}'); renderArchetypeCard('${card.id}','${fromView}')" class="px-3 py-2 rounded-xl border border-purple-500/30 text-purple-200 text-xs font-mono">
+                            ${isFav ? '★ Favorited' : '☆ Add to favorites'}
+                        </button>
+                    </div>
+                    <div class="px-6 pb-6">
+                        <div class="glass-panel rounded-3xl overflow-hidden">
+                            <div class="h-64 bg-cover bg-center" style="background-image:url('${card.image || ARCHETYPE_CARD_BACK}')"></div>
+                            <div class="p-5 border-t border-white/10">
+                                <h3 class="text-2xl text-white serif-font font-bold mb-2">${card.name}</h3>
+                                <p class="text-gray-300 serif-font text-base mb-3">${card.summary}</p>
+                                <p class="text-purple-200 serif-font text-sm leading-relaxed">${card.guidance}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function renderKinkyScenePlannerHome() {
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="flex flex-col h-full p-6 bg-black/20">
+                    <div class="flex items-center justify-between mb-8 pt-4">
+                        <button onclick="renderWelcome()" class="p-3 bg-white/5 rounded-full hover:bg-white/10 transition"><i data-lucide="arrow-left"></i></button>
+                        <h2 class="text-2xl font-bold text-white serif-font">Kinky Scene Planner</h2>
+                        <button onclick="showPlannerAbout()" class="p-2 bg-white/5 rounded-full hover:bg-white/10 transition"><i data-lucide="info"></i></button>
+                    </div>
+                    <div class="glass-panel p-6 rounded-3xl">
+                        <h3 class="text-xl text-white serif-font font-bold mb-2">Planner Integration Ready</h3>
+                        <p class="text-gray-300 serif-font text-base leading-relaxed mb-4">This module shell is ready for your existing planner code, including summary and share flow. Upload your planner code next and we will wire it into this container.</p>
+                        <button onclick="showPlannerAbout()" class="w-full py-3 rounded-2xl border border-purple-500/30 text-purple-200 text-sm hover:bg-purple-500/10 transition serif-font">
+                            Open module background & usage
+                        </button>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
         function renderModeSelect() {
             const app = document.getElementById('app');
             app.innerHTML = `
                 <div class="flex flex-col h-full p-6 bg-black/20">
-                    <div class="flex items-center mb-10 pt-4">
+                    <div class="flex items-center justify-between mb-10 pt-4 gap-3">
                         <button onclick="renderWelcome()" class="p-3 bg-white/5 rounded-full hover:bg-white/10 transition"><i data-lucide="arrow-left"></i></button>
-                        <h2 class="text-2xl font-bold text-white ml-4 serif-font">Select Practice Mode</h2>
+                        <h2 class="text-2xl font-bold text-white serif-font text-center">Hypnoerotic Language Cards</h2>
+                        <button onclick="showHypnoAbout()" class="p-2 bg-white/5 rounded-full hover:bg-white/10 transition"><i data-lucide="info"></i></button>
                     </div>
 
                     <div class="grid gap-6">
