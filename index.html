@@ -867,7 +867,20 @@
                         <div style="flex:1;min-width:0">
                             <div class="text-white font-bold serif-font">${rec.name}</div>
                             <div class="text-xs text-gray-500">${rec.date} · ${rec.theme}</div>
-                            ${rec.audioDataUrl ? `<audio controls preload="metadata" src="${rec.audioDataUrl}" class="mt-2 w-full"></audio>` : `<div class="mt-2 text-[0.7rem] text-amber-300">Playable audio is not available for this item.</div>`}
+                            ${rec.audioDataUrl
+                                ? `<div class="mt-2">
+                                    <div class="flex items-center gap-2">
+                                        <button id="playBtn-${rec.id}" onclick="toggleRecordingPlayback(${rec.id})" class="p-2 bg-purple-600/20 text-purple-300 rounded-full hover:bg-purple-600/30 transition" aria-label="Play or pause recording">
+                                            ▶
+                                        </button>
+                                        <input id="progress-${rec.id}" type="range" min="0" max="100" value="0" oninput="seekRecordingPlayback(${rec.id}, this.value)" class="flex-1 accent-purple-500">
+                                    </div>
+                                    <div class="flex justify-between text-[0.68rem] text-gray-400 mt-1 font-mono">
+                                        <span id="timeCurrent-${rec.id}">00:00</span>
+                                        <span id="timeTotal-${rec.id}">00:00</span>
+                                    </div>
+                                  </div>`
+                                : `<div class="mt-2 text-[0.7rem] text-amber-300">Playable audio is not available for this item.</div>`}
                         </div>
                         <div class="flex items-center gap-2">
                             <button onclick="downloadRecording(${rec.id})" class="p-2 bg-blue-500/10 text-blue-300 rounded-full hover:bg-blue-500/20 transition ${rec.audioDataUrl ? '' : 'opacity-40'}" ${rec.audioDataUrl ? '' : 'disabled'}>
@@ -893,6 +906,87 @@
             lucide.createIcons();
         }
 
+        let playbackAudio = null;
+        let playbackRecordingId = null;
+        let playbackRaf = null;
+
+        function formatPlaybackTime(seconds) {
+            const s = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
+            const m = String(Math.floor(s / 60)).padStart(2, '0');
+            const r = String(s % 60).padStart(2, '0');
+            return `${m}:${r}`;
+        }
+
+        function updatePlaybackUi(recordingId) {
+            if (!playbackAudio || playbackRecordingId !== recordingId) return;
+            const progress = document.getElementById(`progress-${recordingId}`);
+            const cur = document.getElementById(`timeCurrent-${recordingId}`);
+            const total = document.getElementById(`timeTotal-${recordingId}`);
+            if (progress && playbackAudio.duration) {
+                progress.value = String((playbackAudio.currentTime / playbackAudio.duration) * 100);
+            }
+            if (cur) cur.textContent = formatPlaybackTime(playbackAudio.currentTime);
+            if (total) total.textContent = formatPlaybackTime(playbackAudio.duration);
+            playbackRaf = requestAnimationFrame(() => updatePlaybackUi(recordingId));
+        }
+
+        function stopPlaybackUi() {
+            if (playbackRaf) cancelAnimationFrame(playbackRaf);
+            playbackRaf = null;
+            if (playbackRecordingId !== null) {
+                const btn = document.getElementById(`playBtn-${playbackRecordingId}`);
+                if (btn) btn.textContent = '▶';
+            }
+        }
+
+        function toggleRecordingPlayback(recordingId) {
+            const rec = AppState.recordings.find(r => r.id === recordingId);
+            if (!rec || !rec.audioDataUrl) {
+                alert('This recording does not have playable audio data.');
+                return;
+            }
+
+            if (playbackAudio && playbackRecordingId === recordingId && !playbackAudio.paused) {
+                playbackAudio.pause();
+                stopPlaybackUi();
+                return;
+            }
+
+            if (!playbackAudio || playbackRecordingId !== recordingId) {
+                if (playbackAudio) playbackAudio.pause();
+                stopPlaybackUi();
+                playbackAudio = new Audio(rec.audioDataUrl);
+                playbackRecordingId = recordingId;
+                playbackAudio.addEventListener('loadedmetadata', () => {
+                    const total = document.getElementById(`timeTotal-${recordingId}`);
+                    if (total) total.textContent = formatPlaybackTime(playbackAudio.duration);
+                });
+                playbackAudio.addEventListener('ended', () => {
+                    stopPlaybackUi();
+                    const progress = document.getElementById(`progress-${recordingId}`);
+                    const cur = document.getElementById(`timeCurrent-${recordingId}`);
+                    if (progress) progress.value = '0';
+                    if (cur) cur.textContent = '00:00';
+                });
+            }
+
+            const btn = document.getElementById(`playBtn-${recordingId}`);
+            if (btn) btn.textContent = '⏸';
+            playbackAudio.play().then(() => {
+                stopPlaybackUi();
+                updatePlaybackUi(recordingId);
+            }).catch(() => {
+                if (btn) btn.textContent = '▶';
+                alert('Could not play this recording on this device.');
+            });
+        }
+
+        function seekRecordingPlayback(recordingId, value) {
+            if (!playbackAudio || playbackRecordingId !== recordingId || !playbackAudio.duration) return;
+            const pct = Math.max(0, Math.min(100, Number(value)));
+            playbackAudio.currentTime = (pct / 100) * playbackAudio.duration;
+        }
+
         function downloadRecording(recordingId) {
             const rec = AppState.recordings.find(r => r.id === recordingId);
             if (!rec || !rec.audioDataUrl) {
@@ -910,6 +1004,12 @@
             const rec = AppState.recordings.find(r => r.id === recordingId);
             if (!rec) return;
             if (!confirm(`Delete recording "${rec.name}"?`)) return;
+            if (playbackAudio && playbackRecordingId === recordingId) {
+                playbackAudio.pause();
+                playbackAudio = null;
+                playbackRecordingId = null;
+                stopPlaybackUi();
+            }
             AppState.recordings = AppState.recordings.filter(r => r.id !== recordingId);
             localStorage.setItem('en_recordings_v1', JSON.stringify(AppState.recordings));
             renderRecordings();
