@@ -298,7 +298,8 @@
         const THEME_ORDER = ['Freedom','Joy','Mischief','Playfulness','Safety & Trust','Relaxation','Pleasure','Desire','Sexy','Wildness'];
         const DEFAULT_EXCLUDED_CATEGORIES = ['Deepeners', 'Convincers', 'Triggers', 'Pleasure Metaphors'];
         const CANONICAL_ORIGIN = 'https://hypnocards-eng.pages.dev';
-        const APP_BUILD = 'build-canonical-2026-04-21-01';
+        const APP_BUILD = 'build-canonical-2026-04-21-02';
+        const SW_BUILD = '2026-04-21-02';
 
         const AppState = {
             rawRows: [],          
@@ -1330,7 +1331,7 @@
             });
 
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').then(reg => {
+                navigator.serviceWorker.register(`sw.js?v=${SW_BUILD}`).then(reg => {
                     const activateUpdate = () => {
                         if (reg.waiting) {
                             reg.waiting.postMessage({ type: 'SKIP_WAITING' });
