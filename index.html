@@ -402,7 +402,7 @@
         .archetype-spread-card.is-not-ready { pointer-events: none; }
         .archetype-spread-card.is-dragging { cursor: grabbing; filter: brightness(1.14); }
         .archetype-spread-card.is-chosen {
-            transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+            transition: transform 0.82s cubic-bezier(0.2, 0.9, 0.22, 1);
             z-index: 400 !important;
         }
         .archetype-spread-card.is-flipping .archetype-spread-inner {
@@ -672,8 +672,8 @@
         const THEME_ORDER = ['Freedom','Joy','Mischief','Playfulness','Safety & Trust','Relaxation','Pleasure','Desire','Sexy','Wildness'];
         const DEFAULT_EXCLUDED_CATEGORIES = ['Deepeners', 'Convincers', 'Triggers', 'Pleasure Metaphors'];
         const CANONICAL_ORIGIN = 'https://hypnocards-eng.pages.dev';
-        const APP_BUILD = 'build-canonical-2026-04-22-spread-grow-to-card-view';
-        const SW_BUILD = '2026-04-22-23';
+        const APP_BUILD = 'build-canonical-2026-04-22-spread-grow-smoother-center';
+        const SW_BUILD = '2026-04-22-24';
 
         const AppState = {
             rawRows: [],          
@@ -1225,22 +1225,26 @@
                     const stageHeightPx = stage.clientHeight || 620;
                     const cardWidthPx = el.offsetWidth || 82;
                     const cardHeightPx = el.offsetHeight || 123;
-                    const targetWidthPx = Math.min(stageWidthPx * 0.78, 320);
-                    const targetScale = Math.max(1.32, targetWidthPx / Math.max(1, cardWidthPx));
+                    const maxTargetWidthPx = Math.min(stageWidthPx * 0.72, 306);
+                    const maxTargetHeightPx = Math.min(stageHeightPx * 0.68, 470);
+                    const scaleByWidth = maxTargetWidthPx / Math.max(1, cardWidthPx);
+                    const scaleByHeight = maxTargetHeightPx / Math.max(1, cardHeightPx);
+                    const targetScale = Math.max(1.28, Math.min(scaleByWidth, scaleByHeight));
                     const targetCardWidth = cardWidthPx * targetScale;
                     const targetCardHeight = cardHeightPx * targetScale;
                     const anchorX = stageWidthPx * 0.5;
                     const anchorY = stageHeightPx * 0.56;
                     const targetLeft = (stageWidthPx - targetCardWidth) / 2;
-                    const targetTop = Math.max(20, (stageHeightPx - targetCardHeight) * 0.5 - 12);
+                    const targetCenterY = stageHeightPx * 0.52;
+                    const targetTop = Math.max(18, targetCenterY - (targetCardHeight / 2));
                     const targetX = targetLeft - anchorX;
                     const targetY = targetTop - anchorY;
                     el.style.transform = `translate3d(${targetX.toFixed(2)}px, ${targetY.toFixed(2)}px, 0) rotate(0deg) scale(${targetScale.toFixed(3)})`;
-                    window.setTimeout(() => el.classList.add('is-flipping'), 210);
+                    window.setTimeout(() => el.classList.add('is-flipping'), 260);
                     window.setTimeout(() => {
                         layer.remove();
                         renderArchetypeCard(cardId, AppState.archetypeView.fromView || 'random');
-                    }, 1120);
+                    }, 1280);
                 };
 
                 const onUp = (ev) => {
