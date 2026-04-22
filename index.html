@@ -665,8 +665,8 @@
         const THEME_ORDER = ['Freedom','Joy','Mischief','Playfulness','Safety & Trust','Relaxation','Pleasure','Desire','Sexy','Wildness'];
         const DEFAULT_EXCLUDED_CATEGORIES = ['Deepeners', 'Convincers', 'Triggers', 'Pleasure Metaphors'];
         const CANONICAL_ORIGIN = 'https://hypnocards-eng.pages.dev';
-        const APP_BUILD = 'build-canonical-2026-04-22-flip-fix';
-        const SW_BUILD = '2026-04-22-06';
+        const APP_BUILD = 'build-canonical-2026-04-22-card-crop-scroll-fix';
+        const SW_BUILD = '2026-04-22-07';
 
         const AppState = {
             rawRows: [],          
@@ -1620,7 +1620,7 @@
                     </div>
                     <div class="flex-1 flex flex-col min-h-0 px-4 pb-6">
                         <div class="archetype-perspective flex-1 flex items-center justify-center min-h-0">
-                            <div class="w-full max-w-sm mx-auto">
+                            <div class="w-full max-w-[26rem] mx-auto">
                                 <div
                                     role="button"
                                     tabindex="0"
@@ -1629,15 +1629,14 @@
                                     class="archetype-flip-inner cursor-pointer touch-manipulation ${flipped ? 'is-flipped' : ''}"
                                 >
                                     <div class="archetype-face bg-black">
-                                        <div class="absolute inset-0 bg-cover bg-center" style="background-image:url('${frontBgUrl}')"></div>
+                                        <div class="absolute inset-0 bg-no-repeat bg-center bg-contain" style="background-image:url('${frontBgUrl}')"></div>
                                         ${useFaceImage ? '' : '<div class="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent"></div>'}
                                         ${useFaceImage ? '' : `<div class="absolute bottom-0 left-0 right-0 p-5 text-center"><p class="text-amber-200/90 text-[0.62rem] tracking-[0.28em] uppercase font-mono mb-1">Realm</p><p class="text-amber-50/95 serif-font text-base leading-snug mb-4">${escapeHtmlArchetype(card.realm)}</p><h3 class="text-3xl text-white serif-font font-bold leading-tight">${escapeHtmlArchetype(card.name)}</h3><p class="text-amber-200/90 text-[0.62rem] tracking-[0.22em] uppercase font-mono mt-4 mb-1">Frequency</p><p class="text-white/80 serif-font text-sm leading-snug">${escapeHtmlArchetype(card.energy)}</p><p class="text-[0.7rem] text-amber-100/50 font-mono mt-4 tracking-wide">Portrait art coming soon - tap to read</p></div>`}
                                     </div>
                                     <div class="archetype-face archetype-face-back">
-                                        <div class="h-full flex flex-col min-h-0">
-                                            <div class="flex-shrink-0 px-5 pt-5 pb-3 text-center border-b border-amber-900/20">
-                                                <p class="archetype-section-label">Booklet</p>
-                                                <h3 class="text-lg text-amber-50 serif-font font-semibold">${escapeHtmlArchetype(card.name)}</h3>
+                                        <div class="archetype-booklet-scroll h-full overflow-y-auto no-scrollbar px-5 py-4 pb-6">
+                                            <div class="pt-1 pb-2 text-center border-b border-amber-900/20">
+                                                <h3 class="text-3xl text-amber-50 serif-font font-semibold leading-tight">${escapeHtmlArchetype(card.name)}</h3>
                                                 <div class="mt-4 space-y-3 text-center">
                                                     <div>
                                                         <p class="text-[0.62rem] font-mono text-amber-200/85 uppercase tracking-[0.2em] mb-1">Realm</p>
@@ -1649,7 +1648,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="archetype-booklet-scroll flex-1 min-h-0 overflow-y-auto no-scrollbar px-5 py-4 pb-6">
+                                            <div class="pt-4">
                                                 <div class="mb-5">
                                                     <div class="archetype-section-label">Essence</div>
                                                     ${archetypeParagraphBlocks(card.essence)}
