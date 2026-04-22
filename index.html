@@ -1164,9 +1164,6 @@
             const stage = layer.querySelector('.archetype-spread-stage');
 
             let selected = false;
-            const stageRect = layer.getBoundingClientRect();
-            const originX = stageRect.left + stageRect.width / 2;
-            const originY = stageRect.top + stageRect.height * 0.7;
             const cards = Array.from(layer.querySelectorAll('.archetype-spread-card'));
 
             cards.forEach((el, i) => {
@@ -1216,10 +1213,10 @@
                     if (pointerId == null || ev.pointerId !== pointerId || selected) return;
                     dx = ev.clientX - startX;
                     dy = ev.clientY - startY;
-                    const cardCenterX = originX + baseX;
-                    const cardCenterY = originY + baseY;
-                    const vx = cardCenterX - originX;
-                    const vy = cardCenterY - originY;
+                    // Use the actual arc center as the outward vector reference.
+                    // This makes side cards respond naturally to lateral drags.
+                    const vx = baseX - centerX;
+                    const vy = baseY - centerY;
                     const vlen = Math.hypot(vx, vy) || 1;
                     const ux = vx / vlen;
                     const uy = vy / vlen;
@@ -1270,8 +1267,9 @@
                 const onUp = (ev) => {
                     if (pointerId == null || ev.pointerId !== pointerId || selected) return;
                     el.classList.remove('is-dragging');
-                    const threshold = 66;
-                    if (outShift > threshold) {
+                    const threshold = viewportWidth <= 640 ? 44 : 56;
+                    const dragDistance = Math.hypot(dx, dy);
+                    if (outShift > threshold || dragDistance > threshold + 18) {
                         chooseCard();
                     } else {
                         el.style.transition = 'transform 0.28s cubic-bezier(0.2,0.8,0.2,1)';
@@ -2320,16 +2318,17 @@
             return `Role: ${role} • Duration: ${duration}`;
         }
 
-        function renderPlannerEmbed(mode, sessionId, startChapter, autoShare) {
+        function renderPlannerEmbed(mode, sessionId, startChapter, autoShare, returnTo) {
             const app = document.getElementById('app');
             const subtitle = mode === 'new'
                 ? 'New Consent & Desires Session'
                 : 'Kinky Scene Planner';
             const plannerSrc = `scene-planner-embed-en.html?v=${SW_BUILD}${sessionId ? `&sessionId=${encodeURIComponent(sessionId)}` : ''}${startChapter ? `&startChapter=${encodeURIComponent(startChapter)}` : ''}${autoShare ? `&autoShare=${encodeURIComponent(autoShare)}` : ''}`;
+            const backAction = returnTo === 'sessions' ? 'renderPlannerSessions()' : 'renderKinkyScenePlannerHome()';
             app.innerHTML = `
                 <div class="flex flex-col h-full bg-[#050408]">
                     <div class="p-4 pt-6 flex items-center gap-3">
-                        <button onclick="renderKinkyScenePlannerHome()" class="p-2 bg-white/5 rounded-full hover:bg-white/10 transition"><i data-lucide="arrow-left"></i></button>
+                        <button onclick="${backAction}" class="p-2 bg-white/5 rounded-full hover:bg-white/10 transition"><i data-lucide="arrow-left"></i></button>
                         <h2 class="text-xl font-bold text-white serif-font">${subtitle}</h2>
                     </div>
                     <div class="flex-1 min-h-0 px-2 pb-3 md:px-6 md:pb-6">
@@ -2389,7 +2388,7 @@
                 renderPlannerSessions();
                 return;
             }
-            renderPlannerEmbed('existing', sessionId);
+            renderPlannerEmbed('existing', sessionId, null, null, 'sessions');
         }
 
         function openPlannerSummary(sessionId) {
@@ -2399,7 +2398,7 @@
                 renderPlannerSessions();
                 return;
             }
-            renderPlannerEmbed('existing', sessionId, 'chapter-8');
+            renderPlannerEmbed('existing', sessionId, 'chapter-8', null, 'sessions');
         }
 
         function renamePlannerSession(sessionId) {
@@ -2429,7 +2428,7 @@
                 renderPlannerSessions();
                 return;
             }
-            renderPlannerEmbed('existing', sessionId, 'chapter-8', 'pdf');
+            renderPlannerEmbed('existing', sessionId, 'chapter-8', 'pdf', 'sessions');
         }
 
         function renderModeSelect() {

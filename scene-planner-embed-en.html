@@ -1329,7 +1329,6 @@ label,
               <label for="consentDate" style="min-width:150px;">Date</label>
               <input id="consentDate" type="date" class="text-input" style="max-width:200px;" />
               <button type="button" id="openDatePicker" class="info-btn" aria-label="Open date picker">📅</button>
-              <span id="consentDateDisplay" aria-live="polite"></span>
             </div>
 
             <div class="signature-block" style="grid-column:1/-1;">
@@ -2618,29 +2617,20 @@ label,
     function setupDateField(){
       const input = document.getElementById('consentDate');
       const openBtn = document.getElementById('openDatePicker');
-      const display = document.getElementById('consentDateDisplay');
-      if (!input || !display) return;
+      if (!input) return;
 
       const toYYYYMMDD = d => {
         const dt = new Date(d.getTime() - d.getTimezoneOffset()*60000);
         return dt.toISOString().slice(0,10);
       };
-      const toDDMMYYYY = (yyyy_mm_dd) => {
-        if (!yyyy_mm_dd) return '';
-        const [y,m,d] = yyyy_mm_dd.split('-');
-        return `${d}/${m}/${y}`;
-      };
-
       const todayISO = toYYYYMMDD(new Date());
       const savedDate = String(state.consent.date || '').trim();
       if (savedDate) input.value = savedDate;
       if (!input.value) input.value = todayISO;
       state.consent.date = input.value;
-      display.textContent = toDDMMYYYY(input.value);
 
       input.addEventListener('change', () => {
         state.consent.date = input.value;
-        display.textContent = toDDMMYYYY(input.value);
       });
       if (openBtn) {
         openBtn.addEventListener('click', () => {
