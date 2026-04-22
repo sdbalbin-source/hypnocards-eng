@@ -657,8 +657,8 @@
         const THEME_ORDER = ['Freedom','Joy','Mischief','Playfulness','Safety & Trust','Relaxation','Pleasure','Desire','Sexy','Wildness'];
         const DEFAULT_EXCLUDED_CATEGORIES = ['Deepeners', 'Convincers', 'Triggers', 'Pleasure Metaphors'];
         const CANONICAL_ORIGIN = 'https://hypnocards-eng.pages.dev';
-        const APP_BUILD = 'build-canonical-2026-04-22-hypno-about-how-to-use-polish';
-        const SW_BUILD = '2026-04-22-14';
+        const APP_BUILD = 'build-canonical-2026-04-22-hypno-about-mobile-fix';
+        const SW_BUILD = '2026-04-22-15';
 
         const AppState = {
             rawRows: [],          
@@ -2057,35 +2057,37 @@
                         <div class="w-10"></div>
                     </div>
 
-                    <div class="grid gap-6">
-                        <button onclick="startSession('all')" class="glass-panel p-8 rounded-3xl text-left hover:border-purple-500/50 transition relative overflow-hidden group">
-                            <div class="absolute -right-6 -bottom-6 text-white/5 group-hover:text-purple-500/10 transition-colors"><i data-lucide="layers" size="100"></i></div>
-                            <h3 class="text-2xl font-bold text-white mb-2 serif-font">Basic Deck</h3>
-                            <p class="serif-font text-gray-400 text-lg font-light leading-relaxed">
-                                A balanced deck without advanced topics (trigger words, deepeners, etc.).
-                            </p>
-                        </button>
+                    <div class="flex-1 min-h-0 overflow-y-auto no-scrollbar pb-4">
+                        <div class="grid gap-6">
+                            <button onclick="startSession('all')" class="glass-panel p-8 rounded-3xl text-left hover:border-purple-500/50 transition relative overflow-hidden group">
+                                <div class="absolute -right-6 -bottom-6 text-white/5 group-hover:text-purple-500/10 transition-colors"><i data-lucide="layers" size="100"></i></div>
+                                <h3 class="text-2xl font-bold text-white mb-2 serif-font">Basic Deck</h3>
+                                <p class="serif-font text-gray-400 text-lg font-light leading-relaxed">
+                                    A balanced deck without advanced topics (trigger words, deepeners, etc.).
+                                </p>
+                            </button>
 
-                        <button onclick="renderCategorySelect()" class="glass-panel p-8 rounded-3xl text-left hover:border-purple-500/50 transition relative overflow-hidden group">
-                            <div class="absolute -right-6 -bottom-6 text-white/5 group-hover:text-purple-500/10 transition-colors"><i data-lucide="list-filter" size="100"></i></div>
-                            <h3 class="text-2xl font-bold text-white mb-2 serif-font">Custom Deck</h3>
-                            <p class="serif-font text-gray-400 text-lg font-light leading-relaxed">Choose specific categories for focused practice.<br>Example: only 'Trigger Words' or 'Convincers'.</p>
-                        </button>
-                        
-                        <button onclick="renderRecordings()" class="glass-panel p-6 rounded-3xl text-left hover:border-purple-500/50 transition relative overflow-hidden group mt-4">
-                            <div class="flex items-center gap-4">
-                                <div class="p-3 rounded-full bg-white/5"><i data-lucide="mic"></i></div>
-                                <div>
-                                    <h3 class="text-lg font-bold text-white serif-font">My Recordings</h3>
-                                    <p class="text-gray-500 text-xs">${AppState.recordings.length} saved recordings</p>
+                            <button onclick="renderCategorySelect()" class="glass-panel p-8 rounded-3xl text-left hover:border-purple-500/50 transition relative overflow-hidden group">
+                                <div class="absolute -right-6 -bottom-6 text-white/5 group-hover:text-purple-500/10 transition-colors"><i data-lucide="list-filter" size="100"></i></div>
+                                <h3 class="text-2xl font-bold text-white mb-2 serif-font">Custom Deck</h3>
+                                <p class="serif-font text-gray-400 text-lg font-light leading-relaxed">Choose specific categories for focused practice.<br>Example: only 'Trigger Words' or 'Convincers'.</p>
+                            </button>
+                            
+                            <button onclick="renderRecordings()" class="glass-panel p-6 rounded-3xl text-left hover:border-purple-500/50 transition relative overflow-hidden group mt-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="p-3 rounded-full bg-white/5"><i data-lucide="mic"></i></div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-white serif-font">My Recordings</h3>
+                                        <p class="text-gray-500 text-xs">${AppState.recordings.length} saved recordings</p>
+                                    </div>
                                 </div>
-                            </div>
-                        </button>
-                    </div>
-                    <div class="pt-5">
-                        <button onclick="showHypnoAbout()" class="w-full py-3 rounded-2xl border border-purple-500/30 text-purple-200 text-sm hover:bg-purple-500/10 transition flex items-center justify-center gap-2 serif-font">
-                            <i data-lucide="info"></i> About &amp; How to Use
-                        </button>
+                            </button>
+                        </div>
+                        <div class="pt-5">
+                            <button onclick="showHypnoAbout()" class="w-full py-3 rounded-2xl border border-purple-500/30 text-purple-200 text-sm hover:bg-purple-500/10 transition flex items-center justify-center gap-2 serif-font">
+                                <i data-lucide="info"></i> About &amp; How to Use
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
