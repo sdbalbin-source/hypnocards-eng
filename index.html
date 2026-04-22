@@ -687,8 +687,8 @@
         const THEME_ORDER = ['Freedom','Joy','Mischief','Playfulness','Safety & Trust','Relaxation','Pleasure','Desire','Sexy','Wildness'];
         const DEFAULT_EXCLUDED_CATEGORIES = ['Deepeners', 'Convincers', 'Triggers', 'Pleasure Metaphors'];
         const CANONICAL_ORIGIN = 'https://hypnocards-eng.pages.dev';
-        const APP_BUILD = 'build-canonical-2026-04-22-planner-hotfix-round-2';
-        const SW_BUILD = '2026-04-22-44';
+        const APP_BUILD = 'build-canonical-2026-04-22-planner-hotfix-round-3-a';
+        const SW_BUILD = '2026-04-22-45';
 
         const AppState = {
             rawRows: [],          
@@ -2361,8 +2361,8 @@
                             <div class="text-[11px] text-gray-500 font-mono mt-1">${escapeHtmlArchetype(renderPlannerSessionMeta(s))}</div>
                         </div>
                         <div class="grid grid-cols-2 gap-2">
-                            <button onclick="openPlannerSession('${escapeHtmlArchetype(String(s.id))}')" class="py-2 rounded-xl border border-emerald-400/35 text-emerald-100 text-xs font-mono hover:bg-emerald-500/10 transition">Open</button>
-                            <button onclick="openPlannerSummary('${escapeHtmlArchetype(String(s.id))}')" class="py-2 rounded-xl border border-purple-300/35 text-purple-100 text-xs font-mono hover:bg-purple-500/10 transition">Summary</button>
+                            <button onclick="openPlannerSession('${escapeHtmlArchetype(String(s.id))}')" class="py-2 rounded-xl border border-emerald-400/35 text-emerald-100 text-xs font-mono hover:bg-emerald-500/10 transition">Edit</button>
+                            <button onclick="openPlannerSummary('${escapeHtmlArchetype(String(s.id))}')" class="py-2 rounded-xl border border-purple-300/35 text-purple-100 text-xs font-mono hover:bg-purple-500/10 transition">Open</button>
                             <button onclick="renamePlannerSession('${escapeHtmlArchetype(String(s.id))}')" class="py-2 rounded-xl border border-white/15 text-gray-200 text-xs font-mono hover:bg-white/10 transition">Rename</button>
                             <button onclick="deletePlannerSession('${escapeHtmlArchetype(String(s.id))}')" class="py-2 rounded-xl border border-rose-400/35 text-rose-100 text-xs font-mono hover:bg-rose-500/10 transition">Delete</button>
                         </div>
