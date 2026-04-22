@@ -474,6 +474,8 @@
             max-height: min(68vh, 520px);
             transform-style: preserve-3d;
             transition: transform 0.65s cubic-bezier(0.25, 1, 0.5, 1);
+            border-radius: 0.5rem;
+            overflow: hidden;
         }
         .archetype-flip-inner.is-flipped { transform: rotateY(180deg); }
         .archetype-face {
@@ -481,7 +483,7 @@
             inset: 0;
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
-            border-radius: 1.15rem;
+            border-radius: 0.5rem;
             overflow: hidden;
         }
         .archetype-face-back {
@@ -662,8 +664,8 @@
         const THEME_ORDER = ['Freedom','Joy','Mischief','Playfulness','Safety & Trust','Relaxation','Pleasure','Desire','Sexy','Wildness'];
         const DEFAULT_EXCLUDED_CATEGORIES = ['Deepeners', 'Convincers', 'Triggers', 'Pleasure Metaphors'];
         const CANONICAL_ORIGIN = 'https://hypnocards-eng.pages.dev';
-        const APP_BUILD = 'build-canonical-2026-04-22-archetypes-tarot-fastspread';
-        const SW_BUILD = '2026-04-22-04';
+        const APP_BUILD = 'build-canonical-2026-04-22-webp-optimized';
+        const SW_BUILD = '2026-04-22-05';
 
         const AppState = {
             rawRows: [],          
@@ -684,7 +686,7 @@
         };
         let deferredInstallPrompt = null;
         const ARCHETYPE_MODULE_TITLE = 'Archetypes of Pleasure';
-        const ARCHETYPE_CARD_BACK = 'archetypes/archetype-card-back.png';
+        const ARCHETYPE_CARD_BACK = 'archetypes/archetype-card-back.webp';
         let ARCHETYPES_DATA = [];
 
         function normalizeCategoryKey(category) {
@@ -1039,7 +1041,7 @@
                     <div class="archetype-spread-card is-not-ready" data-index="${i}" data-card-id="${card.id}" data-x="${x.toFixed(2)}" data-y="${y.toFixed(2)}" data-rot="${rot.toFixed(2)}" style="--z:${60 + i}; transform: translate3d(${dealStartX}px, ${dealStartY}px, 0) rotate(${dealStartRot}deg);">
                         <div class="archetype-spread-inner">
                             <div class="archetype-spread-face back" style="background-image:url('${ARCHETYPE_CARD_BACK}')"></div>
-                            <div class="archetype-spread-face front">${escapeHtmlArchetype(card.name)}</div>
+                            <div class="archetype-spread-face front"></div>
                         </div>
                     </div>
                 `;
@@ -1612,7 +1614,7 @@
                     <div class="p-4 pt-6 flex items-center justify-between gap-3 flex-shrink-0">
                         <button onclick="${backNav}" class="p-2 bg-white/5 rounded-full touch-manipulation"><i data-lucide="arrow-left"></i></button>
                         <button onclick="toggleArchetypeFavorite('${card.id}'); renderArchetypeCard('${card.id}','${fromView}')" class="px-3 py-2 rounded-xl border border-purple-500/30 text-purple-200 text-xs font-mono touch-manipulation">
-                            ${isFav ? 'â˜… Favorited' : 'â˜† Add to favorites'}
+                            ${isFav ? '&#9733; Favorited' : '&#9734; Add to favorites'}
                         </button>
                     </div>
                     <div class="flex-1 flex flex-col min-h-0 px-4 pb-6">
@@ -1627,16 +1629,8 @@
                                 >
                                     <div class="archetype-face bg-black">
                                         <div class="absolute inset-0 bg-cover bg-center" style="background-image:url('${frontBgUrl}')"></div>
-                                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent"></div>
-                                        <div class="absolute bottom-0 left-0 right-0 p-5 text-center">
-                                            <p class="text-amber-200/90 text-[0.62rem] tracking-[0.28em] uppercase font-mono mb-1">Realm</p>
-                                            <p class="text-amber-50/95 serif-font text-base leading-snug mb-4">${escapeHtmlArchetype(card.realm)}</p>
-                                            <h3 class="text-3xl text-white serif-font font-bold leading-tight">${escapeHtmlArchetype(card.name)}</h3>
-                                            <p class="text-amber-200/90 text-[0.62rem] tracking-[0.22em] uppercase font-mono mt-4 mb-1">Frequency</p>
-                                            <p class="text-white/80 serif-font text-sm leading-snug">${escapeHtmlArchetype(card.energy)}</p>
-                                            ${useFaceImage ? '' : '<p class="text-[0.7rem] text-amber-100/50 font-mono mt-4 tracking-wide">Portrait art coming soon Â· tap to read</p>'}
-                                            ${useFaceImage ? '<p class="text-[0.7rem] text-amber-100/55 font-mono mt-4 tracking-wide">Tap to read the full card</p>' : ''}
-                                        </div>
+                                        ${useFaceImage ? '' : '<div class="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent"></div>'}
+                                        ${useFaceImage ? '' : `<div class="absolute bottom-0 left-0 right-0 p-5 text-center"><p class="text-amber-200/90 text-[0.62rem] tracking-[0.28em] uppercase font-mono mb-1">Realm</p><p class="text-amber-50/95 serif-font text-base leading-snug mb-4">${escapeHtmlArchetype(card.realm)}</p><h3 class="text-3xl text-white serif-font font-bold leading-tight">${escapeHtmlArchetype(card.name)}</h3><p class="text-amber-200/90 text-[0.62rem] tracking-[0.22em] uppercase font-mono mt-4 mb-1">Frequency</p><p class="text-white/80 serif-font text-sm leading-snug">${escapeHtmlArchetype(card.energy)}</p><p class="text-[0.7rem] text-amber-100/50 font-mono mt-4 tracking-wide">Portrait art coming soon - tap to read</p></div>`}
                                     </div>
                                     <div class="archetype-face archetype-face-back">
                                         <div class="h-full flex flex-col min-h-0">

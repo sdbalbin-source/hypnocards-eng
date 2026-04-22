@@ -1,4 +1,4 @@
-﻿const CACHE = 'hypnocards-v11';
+﻿const CACHE = 'hypnocards-v12';
 const ASSETS = [
   '/',
   '/index.html',
@@ -7,7 +7,7 @@ const ASSETS = [
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
-  '/archetypes/archetype-card-back.png'
+  '/archetypes/archetype-card-back.webp'
 ];
 self.addEventListener('install', e => {
   self.skipWaiting();
