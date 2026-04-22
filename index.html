@@ -463,6 +463,21 @@
             color: rgba(212, 175, 125, 0.82);
             margin-top: 0.35rem;
         }
+        @media (max-width: 640px) {
+            .archetype-spread-stage {
+                height: min(84vh, 620px);
+            }
+            .archetype-spread-card {
+                width: min(22vw, 82px);
+            }
+            .archetype-spread-title {
+                top: 4%;
+                font-size: 1.1rem;
+            }
+            .archetype-spread-subtitle {
+                font-size: 0.62rem;
+            }
+        }
 
         /* Archetypes: flip card (face / booklet) */
         .archetype-perspective { perspective: 1100px; }
@@ -657,8 +672,8 @@
         const THEME_ORDER = ['Freedom','Joy','Mischief','Playfulness','Safety & Trust','Relaxation','Pleasure','Desire','Sexy','Wildness'];
         const DEFAULT_EXCLUDED_CATEGORIES = ['Deepeners', 'Convincers', 'Triggers', 'Pleasure Metaphors'];
         const CANONICAL_ORIGIN = 'https://hypnocards-eng.pages.dev';
-        const APP_BUILD = 'build-canonical-2026-04-22-archetypes-about-accordion';
-        const SW_BUILD = '2026-04-22-18';
+        const APP_BUILD = 'build-canonical-2026-04-22-mobile-spread-fit';
+        const SW_BUILD = '2026-04-22-19';
 
         const AppState = {
             rawRows: [],          
@@ -1084,14 +1099,19 @@
             layer.setAttribute('dir', 'ltr');
             const spreadCards = pickArchetypeSpreadCards(15);
             if (!spreadCards.length) return;
+            const viewportWidth = Math.max(320, window.innerWidth || 360);
+            const viewportHeight = Math.max(560, window.innerHeight || 640);
+            const stageWidth = Math.min(440, viewportWidth - 32);
+            const stageHeight = Math.min(720, viewportHeight * 0.88);
+            const isMobileSpread = viewportWidth <= 640;
             const angleStart = -74;
             const angleEnd = 74;
             const step = spreadCards.length > 1 ? (angleEnd - angleStart) / (spreadCards.length - 1) : 0;
-            const radius = 278;
-            const centerX = 110;
-            const centerY = 138;
-            const dealStartX = -164;
-            const dealStartY = 114;
+            const radius = Math.min(278, stageWidth * (isMobileSpread ? 0.46 : 0.56));
+            const centerX = 0;
+            const centerY = Math.max(82, Math.min(160, stageHeight * (isMobileSpread ? 0.21 : 0.24)));
+            const dealStartX = -Math.max(126, stageWidth * 0.42);
+            const dealStartY = Math.max(82, stageHeight * 0.16);
             const dealStartRot = -5;
             const cardsHtml = spreadCards.map((card, i) => {
                 const angle = angleStart + (step * i);
