@@ -679,7 +679,7 @@
     </div>
     <div class="vignette"></div>
 
-    <div id="app" class="h-screen w-full max-w-md mx-auto relative flex flex-col"></div>
+    <div id="app" class="h-screen w-full max-w-md md:max-w-[1280px] mx-auto relative flex flex-col"></div>
 
     <script>
         // --- 1. State Management ---
@@ -687,8 +687,8 @@
         const THEME_ORDER = ['Freedom','Joy','Mischief','Playfulness','Safety & Trust','Relaxation','Pleasure','Desire','Sexy','Wildness'];
         const DEFAULT_EXCLUDED_CATEGORIES = ['Deepeners', 'Convincers', 'Triggers', 'Pleasure Metaphors'];
         const CANONICAL_ORIGIN = 'https://hypnocards-eng.pages.dev';
-        const APP_BUILD = 'build-canonical-2026-04-22-planner-hotfix-round-3-a';
-        const SW_BUILD = '2026-04-22-45';
+        const APP_BUILD = 'build-canonical-2026-04-22-planner-hotfix-round-3-b';
+        const SW_BUILD = '2026-04-22-46';
 
         const AppState = {
             rawRows: [],          
@@ -1498,7 +1498,7 @@
                 ? `<div class="mt-2 text-[0.75rem] text-emerald-300 font-mono">Live URL verified: hypnocards-eng.pages.dev</div>`
                 : `<button onclick="openCanonicalSite()" class="mt-2 w-full py-2 rounded-xl border border-amber-400/40 text-amber-200 text-xs hover:bg-amber-500/10 transition font-mono">You are on a deployment URL. Tap to open official live site</button>`;
             app.innerHTML = `
-                <div class="flex flex-col h-full bg-[#050408]">
+                <div class="flex flex-col h-full bg-[#050408] md:max-w-[1240px] md:mx-auto md:w-full">
                     <div class="p-6 pt-8 flex items-center gap-4">
                         <button onclick="renderWelcome()" class="p-2 bg-white/5 rounded-full"><i data-lucide="arrow-left"></i></button>
                         <h2 class="text-2xl font-bold text-white serif-font">About Pleasure Practice Studio</h2>
@@ -1934,7 +1934,7 @@
                         <span class="text-violet-100 font-semibold serif-font text-[1.08rem]">${s.title}</span>
                         <span class="text-violet-200/80 text-sm font-mono">+</span>
                     </summary>
-                    <div class="px-4 pb-4">
+                    <div class="px-4 pb-4 md:px-6">
                         ${s.body.map(line => `
                             <p class="text-gray-200 serif-font text-[1.04rem] leading-relaxed ${line.startsWith('•') ? 'pl-1 text-violet-50' : ''} ${line.endsWith(':') ? 'text-fuchsia-100 font-semibold mt-1' : ''}">
                                 ${line}
@@ -2335,7 +2335,7 @@
                     <div class="px-4 pb-4">
                         <p class="text-[0.72rem] text-gray-400 font-mono">Embedded planner preserves original summary behavior.</p>
                     </div>
-                    <div class="flex-1 min-h-0 px-4 pb-4">
+                    <div class="flex-1 min-h-0 px-4 pb-4 md:px-6 md:pb-6">
                         <iframe
                             src="${plannerSrc}"
                             title="Kinky Scene Planner Embed"
