@@ -657,8 +657,8 @@
         const THEME_ORDER = ['Freedom','Joy','Mischief','Playfulness','Safety & Trust','Relaxation','Pleasure','Desire','Sexy','Wildness'];
         const DEFAULT_EXCLUDED_CATEGORIES = ['Deepeners', 'Convincers', 'Triggers', 'Pleasure Metaphors'];
         const CANONICAL_ORIGIN = 'https://hypnocards-eng.pages.dev';
-        const APP_BUILD = 'build-canonical-2026-04-22-hypno-about-deep-polish';
-        const SW_BUILD = '2026-04-22-13';
+        const APP_BUILD = 'build-canonical-2026-04-22-hypno-about-how-to-use-polish';
+        const SW_BUILD = '2026-04-22-14';
 
         const AppState = {
             rawRows: [],          
@@ -1523,24 +1523,24 @@
             const emphasisPrefixRegex = /^([A-Za-z][A-Za-z0-9'() \-&,]{2,44}:)\s+/;
             function toEmphasizedInline(text) {
                 const escaped = escapeHtmlArchetype(text || '');
-                let output = escaped.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>');
+                let output = escaped.replace(/\*\*(.+?)\*\*/g, '<strong class="text-fuchsia-200 font-bold text-[1.04em]">$1</strong>');
                 output = output
-                    .replace(/^(It is not)(\s+)/, '<strong class="text-white">$1</strong>$2')
-                    .replace(/^(It is)(\s+)/, '<strong class="text-white">$1</strong>$2')
-                    .replace(/^(Top of the card|Middle of the card|Bottom of the card)(\s+)/, '<strong class="text-white">$1</strong>$2');
-                return output.replace(emphasisPrefixRegex, '<strong class="text-white">$1</strong> ');
+                    .replace(/^(It is not)(\s+)/, '<strong class="text-rose-200 font-bold text-[1.04em]">$1</strong>$2')
+                    .replace(/^(It is)(\s+)/, '<strong class="text-fuchsia-200 font-bold text-[1.04em]">$1</strong>$2')
+                    .replace(/^(Top of the card|Middle of the card|Bottom of the card)(\s+)/, '<strong class="text-violet-200 font-bold text-[1.04em]">$1</strong>$2');
+                return output.replace(emphasisPrefixRegex, '<strong class="text-violet-200 font-bold text-[1.04em]">$1</strong> ');
             }
             function renderGuideParagraph(text, accentColor) {
                 const trimmed = (text || '').trim();
                 if (!trimmed) return '';
                 if (headingLikeLines.has(trimmed)) {
-                    return `<p class="text-white serif-font text-base font-semibold tracking-wide">${toEmphasizedInline(trimmed)}</p>`;
+                    return `<p class="text-violet-100 serif-font text-[1.02rem] font-bold tracking-wide">${toEmphasizedInline(trimmed)}</p>`;
                 }
                 if (/^Method \d+:/.test(trimmed)) {
-                    return `<p class="text-white serif-font text-sm font-semibold">${toEmphasizedInline(trimmed)}</p>`;
+                    return `<p class="text-fuchsia-100 serif-font text-[0.96rem] font-bold">${toEmphasizedInline(trimmed)}</p>`;
                 }
                 if (/^\d+\.\s/.test(trimmed)) {
-                    return `<p class="text-white/90 serif-font text-sm font-semibold">${toEmphasizedInline(trimmed)}</p>`;
+                    return `<p class="text-violet-100 serif-font text-[0.96rem] font-bold">${toEmphasizedInline(trimmed)}</p>`;
                 }
                 if (trimmed.startsWith('→')) {
                     return `<p class="serif-font text-sm leading-relaxed pl-3 border-l-2" style="border-color:${accentColor}; color:#e5e7eb">${toEmphasizedInline(trimmed)}</p>`;
@@ -1587,7 +1587,6 @@
                             <summary class="cursor-pointer list-none">
                                 <div class="flex items-center justify-between gap-3">
                                     <h3 class="text-xl text-white serif-font font-bold">${escapeHtmlArchetype(section.title)}</h3>
-                                    <span class="text-xs uppercase tracking-[0.16em] font-mono text-purple-200/80">Tap</span>
                                 </div>
                             </summary>
                             <div class="mt-4 space-y-3 border-t border-white/10 pt-4">${body}</div>
@@ -1607,7 +1606,6 @@
                                         <p class="text-[0.68rem] tracking-[0.2em] uppercase font-mono" style="color:${catColor}">Category ${c.number}</p>
                                         <h3 class="text-xl text-white serif-font font-bold">${escapeHtmlArchetype(c.name)}</h3>
                                     </div>
-                                    <span class="text-xs uppercase tracking-[0.16em] font-mono" style="color:${catColor}">Tap</span>
                                 </div>
                             </summary>
                             <div class="mt-4 space-y-3 border-t border-white/10 pt-4">${content}</div>
@@ -1619,11 +1617,11 @@
                 <div class="flex flex-col h-full bg-[#050408]">
                     <div class="p-6 pt-8 flex items-center gap-4">
                         <button onclick="renderModeSelect()" class="p-2 bg-white/5 rounded-full"><i data-lucide="arrow-left"></i></button>
-                        <h2 class="text-2xl font-bold text-white serif-font">About Hypnoerotic Language Cards</h2>
+                        <h2 class="text-2xl font-bold text-white serif-font">About &amp; How to Use</h2>
                     </div>
                     <div class="flex-1 overflow-y-auto px-6 pb-10 space-y-6 no-scrollbar">
                         <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
-                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">HypnoErotica Guidebook</h3>
+                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">About &amp; How to Use This Guidebook</h3>
                             <p class="text-gray-300 serif-font text-base leading-relaxed">This section brings the full conceptual framework of the HypnoErotica language deck into the app. Use it as study material before and between live practice sessions.</p>
                         </div>
                         <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
@@ -2086,7 +2084,7 @@
                     </div>
                     <div class="pt-5">
                         <button onclick="showHypnoAbout()" class="w-full py-3 rounded-2xl border border-purple-500/30 text-purple-200 text-sm hover:bg-purple-500/10 transition flex items-center justify-center gap-2 serif-font">
-                            <i data-lucide="info"></i> About
+                            <i data-lucide="info"></i> About &amp; How to Use
                         </button>
                     </div>
                 </div>
