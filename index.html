@@ -657,8 +657,8 @@
         const THEME_ORDER = ['Freedom','Joy','Mischief','Playfulness','Safety & Trust','Relaxation','Pleasure','Desire','Sexy','Wildness'];
         const DEFAULT_EXCLUDED_CATEGORIES = ['Deepeners', 'Convincers', 'Triggers', 'Pleasure Metaphors'];
         const CANONICAL_ORIGIN = 'https://hypnocards-eng.pages.dev';
-        const APP_BUILD = 'build-canonical-2026-04-22-hypno-about-mobile-readability';
-        const SW_BUILD = '2026-04-22-16';
+        const APP_BUILD = 'build-canonical-2026-04-22-archetypes-about-accordion';
+        const SW_BUILD = '2026-04-22-18';
 
         const AppState = {
             rawRows: [],          
@@ -1640,96 +1640,118 @@
 
         function showArchetypesAbout() {
             const app = document.getElementById('app');
+            const sections = [
+                {
+                    title: 'Before you begin',
+                    body: `
+                        <p>Use this app as a live practice space for the Archetypes of Pleasure text: draw randomly for surprise, build a custom deck by realm, or open all cards and mark your active favorites. The text below keeps the full conceptual depth of the companion booklet, adapted for in-app reading.</p>
+                    `
+                },
+                {
+                    title: 'Light and Shadow',
+                    body: `
+                        <p>Jung taught that every figure of light casts a shadow, and every shadow conceals light.</p>
+                        <p>The radiant Queen has something of the Tyrant in her. The innocent Little Girl has something of the Seductress in her. The Demoness is merely an Angel pushed into the darkness.</p>
+                        <p>Working with erotic archetypes is also working with the shadow - not to destroy it, but to know it, to love it, to give it a legitimate place. The fantasies we're not supposed to have, the urges we're ashamed of, the desires we hide even from ourselves - all these wait in the basement of the psyche, knocking on the door.</p>
+                        <p>We can continue to ignore the knocking. But we can also open the door, invite the shadow in, and discover that it is not a monster - it is simply a part of us that is hungry for light.</p>
+                    `
+                },
+                {
+                    title: 'The Power of Image',
+                    body: `
+                        <p>Why do we need images at all? Why not just have sex?</p>
+                        <p>Because human beings are creatures of story and imagination. We are not just bodies - we are meanings. Physical touch is one thing; touch that carries a story is something else entirely.</p>
+                        <p>When someone ties my hands - that's rope. When someone ties my hands and I am their prisoner - that's a whole world.</p>
+                        <p>The image expands the experience to dimensions that the body alone cannot reach. It awakens ancient emotions, connects to stories we absorbed from childhood, activates the imagination - which is the most powerful erotic muscle we have. The same physical touch becomes more meaningful, more powerful, unforgettable.</p>
+                    `
+                },
+                {
+                    title: 'Not Disguise - Embodiment',
+                    body: `
+                        <p>One of the deepest fears around role-play is: "If I pretend to be someone else, am I being inauthentic?"</p>
+                        <p>Psychological research shows the exact opposite.</p>
+                        <p>Adopting an erotic persona is a technique of embodiment - a way to access authentic parts of the self that simply don't find expression in everyday life. The woman who manages a company all day might find deep rest in the Marionette archetype, where she can finally let go of control. The quiet, introverted man might discover a power he never knew in the Beast archetype. These are not contradictions - they are completions.</p>
+                        <p>We are not dressing up as someone else. We are allowing additional parts of ourselves to come to light.</p>
+                    `
+                },
+                {
+                    title: 'How to Use These Cards',
+                    body: `
+                        <p>The cards in your hands are not instruction manuals. They are invitations.</p>
+                        <p>Each card presents an archetype - a figure that can be embodied, explored, played with.</p>
+                        <p>There are cards that will attract you immediately, as if they've been waiting for you all your life. There are cards that will frighten you, repel you - and precisely there, perhaps, hides an invitation for deeper exploration.</p>
+                        <p>You can use the cards in several ways:</p>
+                        <p><strong class="text-violet-200 font-bold text-[1.04em]">Alone:</strong> Flip through, observe, ask yourself - who am I when I am X? Which archetypes live in me? Which frighten me and why? What is this archetype's gift for me?</p>
+                        <p><strong class="text-violet-200 font-bold text-[1.04em]">As a couple:</strong> Draw a card and embody it together. Or consciously choose an archetype you want to explore. Or each person chooses a card and see what happens when they meet.</p>
+                        <p><strong class="text-violet-200 font-bold text-[1.04em]">As conversation:</strong> Use the cards as an opener for discussion about desires, boundaries, fantasies. The card can open a conversation about what might be embarrassing or exciting to share.</p>
+                    `
+                },
+                {
+                    title: 'Deep Work',
+                    body: `
+                        <p>If you feel ready to dive deeper - alone, in a journal, or in conversation with a close friend or partner - here is a list of questions that will help you transform the archetype from an abstract image into a living, full character connected to your body and desires.</p>
+                        <p>Choose a card, focus on it, and let each question resonate. Write, speak aloud, or even dance the answers - whatever feels right.</p>
+                        <p>What emotions does she awaken in you? (attraction, repulsion, shame, guilt, excitement)</p>
+                        <p>What emotions does she awaken in others? (fear, attraction, admiration, pity - why?)</p>
+                        <p>What does she wear? (what clothes, colors, textures, makeup - what brings her to life?)</p>
+                        <p>How does she move? (is she slow and deliberate? wild and unpredictable? upright or sinuous?)</p>
+                        <p>Where does she burst forth? (indoors or outdoors? day or night? alone or with people?)</p>
+                        <p>What does she want most right now? (an immediate desire - touch, a word, a place, freedom?)</p>
+                        <p>How does she have sex? (what is her rhythm? what does she love? what turns her on?)</p>
+                        <p>What price do you pay when she is absent? (what quality is missing from your life or relationships when you don't allow her expression? what is lost?)</p>
+                        <p>What gift does she bring to your life? (what quality does she teach you - power, softness, release - that you lack right now?)</p>
+                        <p>What does she ask of her partner? (if she could give them instructions, what would she ask them to do right now?)</p>
+                        <p>What is her "safe space"? (what conditions need to exist in the room for her to feel comfortable revealing herself fully? light/darkness, music, a certain type of touch?)</p>
+                        <p>What is her small ritual? (what small, physical action - like applying perfume, putting on a piece of jewelry, or a certain breath - helps you "enter" into her character?)</p>
+                        <p>Who is her complementary archetype? (teacher-student, tigress-prey, vampire-victim, tamer-lion)</p>
+                        <p>Give yourself time with these questions - they are not an interrogation, they are an invitation. If something arises (an emotion, a memory, a sensation in the body) - give it space.</p>
+                    `
+                },
+                {
+                    title: 'A Note on Safety and Awareness',
+                    body: `
+                        <p>Working with archetypes can be powerful. Some of the figures touch sensitive places, memories, traumas, deep fears. This is not danger - but it is reason to approach this work with respect.</p>
+                        <p>Some principles:</p>
+                        <p><strong class="text-violet-200 font-bold text-[1.04em]">Consent always.</strong> Before embodying an archetype together - talk.</p>
+                        <p><strong class="text-violet-200 font-bold text-[1.04em]">Safe word always.</strong> You can exit the game at any moment.</p>
+                        <p><strong class="text-violet-200 font-bold text-[1.04em]">Processing afterward.</strong> Sometimes things come up. Give them space.</p>
+                        <p><strong class="text-violet-200 font-bold text-[1.04em]">Curiosity, not judgment.</strong> There are no right or wrong archetypes. There is only exploration.</p>
+                    `
+                },
+                {
+                    title: 'Invitation',
+                    body: `
+                        <p>What awaits you in these cards is not just sexual play. It is an invitation to know yourself anew. To meet forgotten parts, to give a stage to silenced figures, to discover that you are so much more than you thought.</p>
+                        <p>The bed is a stage. The archetypes are the script. You - you are all the characters at once.</p>
+                        <p><strong class="text-violet-200 font-bold text-[1.04em]">Let's play.</strong></p>
+                    `
+                }
+            ];
+            const sectionsHtml = sections.map((section, idx) => {
+                const sectionColor = idx % 2 ? '#7c3aed' : '#a855f7';
+                return `
+                    <details class="group bg-black/25 rounded-2xl p-4 shadow-[0_8px_30px_rgba(0,0,0,0.28)]" style="border:1px solid ${sectionColor}3f" ${idx === 0 ? 'open' : ''}>
+                        <summary class="cursor-pointer list-none">
+                            <h3 class="text-xl text-white serif-font font-bold">${section.title}</h3>
+                        </summary>
+                        <div class="mt-4 space-y-3 border-t border-white/10 pt-4 text-gray-300 serif-font text-[1rem] leading-relaxed">
+                            ${section.body}
+                        </div>
+                    </details>
+                `;
+            }).join('');
             app.innerHTML = `
                 <div class="flex flex-col h-full bg-[#050408]">
                     <div class="p-6 pt-8 flex items-center gap-4">
                         <button onclick="renderArchetypesHome()" class="p-2 bg-white/5 rounded-full"><i data-lucide="arrow-left"></i></button>
-                        <h2 class="text-2xl font-bold text-white serif-font">About Archetypes of Pleasure</h2>
+                        <h2 class="text-2xl font-bold text-white serif-font">About &amp; How to Use</h2>
                     </div>
-                    <div class="flex-1 overflow-y-auto px-6 pb-10 space-y-6 no-scrollbar">
+                    <div class="flex-1 overflow-y-auto px-6 pb-20 space-y-6 no-scrollbar">
                         <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
-                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Before you begin</h3>
-                            <p class="text-gray-300 serif-font text-base leading-relaxed">Use this app as a live practice space for the Archetypes of Pleasure text: draw randomly for surprise, build a custom deck by realm, or open all cards and mark your active favorites. The text below keeps the full conceptual depth of the companion booklet, adapted for in-app reading.</p>
+                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">About &amp; How to Use Archetypes</h3>
+                            <p class="text-gray-300 serif-font text-[1.03rem] leading-relaxed">Explore the archetype guide in expandable sections, then bring what resonates into your deck selection and card practice. The structure is aligned with the Hypno module for a consistent reading experience.</p>
                         </div>
-                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
-                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Light and Shadow</h3>
-                            <div class="space-y-3 text-gray-300 serif-font text-sm leading-relaxed">
-                                <p>Jung taught that every figure of light casts a shadow, and every shadow conceals light.</p>
-                                <p>The radiant Queen has something of the Tyrant in her. The innocent Little Girl has something of the Seductress in her. The Demoness is merely an Angel pushed into the darkness.</p>
-                                <p>Working with erotic archetypes is also working with the shadow - not to destroy it, but to know it, to love it, to give it a legitimate place. The fantasies we're not supposed to have, the urges we're ashamed of, the desires we hide even from ourselves - all these wait in the basement of the psyche, knocking on the door.</p>
-                                <p>We can continue to ignore the knocking. But we can also open the door, invite the shadow in, and discover that it is not a monster - it is simply a part of us that is hungry for light.</p>
-                            </div>
-                        </div>
-                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
-                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">The Power of Image</h3>
-                            <div class="space-y-3 text-gray-300 serif-font text-sm leading-relaxed">
-                                <p>Why do we need images at all? Why not just have sex?</p>
-                                <p>Because human beings are creatures of story and imagination. We are not just bodies - we are meanings. Physical touch is one thing; touch that carries a story is something else entirely.</p>
-                                <p>When someone ties my hands - that's rope. When someone ties my hands and I am their prisoner - that's a whole world.</p>
-                                <p>The image expands the experience to dimensions that the body alone cannot reach. It awakens ancient emotions, connects to stories we absorbed from childhood, activates the imagination - which is the most powerful erotic muscle we have. The same physical touch becomes more meaningful, more powerful, unforgettable.</p>
-                            </div>
-                        </div>
-                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
-                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Not Disguise - Embodiment</h3>
-                            <div class="space-y-3 text-gray-300 serif-font text-sm leading-relaxed">
-                                <p>One of the deepest fears around role-play is: "If I pretend to be someone else, am I being inauthentic?"</p>
-                                <p>Psychological research shows the exact opposite.</p>
-                                <p>Adopting an erotic persona is a technique of embodiment - a way to access authentic parts of the self that simply don't find expression in everyday life. The woman who manages a company all day might find deep rest in the Marionette archetype, where she can finally let go of control. The quiet, introverted man might discover a power he never knew in the Beast archetype. These are not contradictions - they are completions.</p>
-                                <p>We are not dressing up as someone else. We are allowing additional parts of ourselves to come to light.</p>
-                            </div>
-                        </div>
-                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
-                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">How to Use These Cards</h3>
-                            <div class="space-y-3 text-gray-300 serif-font text-sm leading-relaxed">
-                                <p>The cards in your hands are not instruction manuals. They are invitations.</p>
-                                <p>Each card presents an archetype - a figure that can be embodied, explored, played with.</p>
-                                <p>There are cards that will attract you immediately, as if they've been waiting for you all your life. There are cards that will frighten you, repel you - and precisely there, perhaps, hides an invitation for deeper exploration.</p>
-                                <p>You can use the cards in several ways:</p>
-                                <p><strong class="text-white">Alone:</strong> Flip through, observe, ask yourself - who am I when I am X? Which archetypes live in me? Which frighten me and why? What is this archetype's gift for me?</p>
-                                <p><strong class="text-white">As a couple:</strong> Draw a card and embody it together. Or consciously choose an archetype you want to explore. Or each person chooses a card and see what happens when they meet.</p>
-                                <p><strong class="text-white">As conversation:</strong> Use the cards as an opener for discussion about desires, boundaries, fantasies. The card can open a conversation about what might be embarrassing or exciting to share.</p>
-                            </div>
-                        </div>
-                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
-                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Deep Work</h3>
-                            <div class="space-y-3 text-gray-300 serif-font text-sm leading-relaxed">
-                                <p>If you feel ready to dive deeper - alone, in a journal, or in conversation with a close friend or partner - here is a list of questions that will help you transform the archetype from an abstract image into a living, full character connected to your body and desires.</p>
-                                <p>Choose a card, focus on it, and let each question resonate. Write, speak aloud, or even dance the answers - whatever feels right.</p>
-                                <p>What emotions does she awaken in you? (attraction, repulsion, shame, guilt, excitement)</p>
-                                <p>What emotions does she awaken in others? (fear, attraction, admiration, pity - why?)</p>
-                                <p>What does she wear? (what clothes, colors, textures, makeup - what brings her to life?)</p>
-                                <p>How does she move? (is she slow and deliberate? wild and unpredictable? upright or sinuous?)</p>
-                                <p>Where does she burst forth? (indoors or outdoors? day or night? alone or with people?)</p>
-                                <p>What does she want most right now? (an immediate desire - touch, a word, a place, freedom?)</p>
-                                <p>How does she have sex? (what is her rhythm? what does she love? what turns her on?)</p>
-                                <p>What price do you pay when she is absent? (what quality is missing from your life or relationships when you don't allow her expression? what is lost?)</p>
-                                <p>What gift does she bring to your life? (what quality does she teach you - power, softness, release - that you lack right now?)</p>
-                                <p>What does she ask of her partner? (if she could give them instructions, what would she ask them to do right now?)</p>
-                                <p>What is her "safe space"? (what conditions need to exist in the room for her to feel comfortable revealing herself fully? light/darkness, music, a certain type of touch?)</p>
-                                <p>What is her small ritual? (what small, physical action - like applying perfume, putting on a piece of jewelry, or a certain breath - helps you "enter" into her character?)</p>
-                                <p>Who is her complementary archetype? (teacher-student, tigress-prey, vampire-victim, tamer-lion)</p>
-                                <p>Give yourself time with these questions - they are not an interrogation, they are an invitation. If something arises (an emotion, a memory, a sensation in the body) - give it space.</p>
-                            </div>
-                        </div>
-                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
-                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">A Note on Safety and Awareness</h3>
-                            <div class="space-y-3 text-gray-300 serif-font text-sm leading-relaxed">
-                                <p>Working with archetypes can be powerful. Some of the figures touch sensitive places, memories, traumas, deep fears. This is not danger - but it is reason to approach this work with respect.</p>
-                                <p>Some principles:</p>
-                                <p><strong class="text-white">Consent always.</strong> Before embodying an archetype together - talk.</p>
-                                <p><strong class="text-white">Safe word always.</strong> You can exit the game at any moment.</p>
-                                <p><strong class="text-white">Processing afterward.</strong> Sometimes things come up. Give them space.</p>
-                                <p><strong class="text-white">Curiosity, not judgment.</strong> There are no right or wrong archetypes. There is only exploration.</p>
-                            </div>
-                        </div>
-                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
-                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Invitation</h3>
-                            <div class="space-y-3 text-gray-300 serif-font text-sm leading-relaxed">
-                                <p>What awaits you in these cards is not just sexual play. It is an invitation to know yourself anew. To meet forgotten parts, to give a stage to silenced figures, to discover that you are so much more than you thought.</p>
-                                <p>The bed is a stage. The archetypes are the script. You - you are all the characters at once.</p>
-                                <p><strong class="text-white">Let's play.</strong></p>
-                            </div>
-                        </div>
+                        <div class="space-y-3">${sectionsHtml}</div>
                     </div>
                 </div>
             `;
@@ -2057,7 +2079,7 @@
                         <div class="w-10"></div>
                     </div>
 
-                    <div class="flex-1 min-h-0 overflow-y-auto no-scrollbar pb-4">
+                    <div class="flex-1 min-h-0 overflow-y-auto no-scrollbar pb-24">
                         <div class="grid gap-6">
                             <button onclick="startSession('all')" class="glass-panel p-8 rounded-3xl text-left hover:border-purple-500/50 transition relative overflow-hidden group">
                                 <div class="absolute -right-6 -bottom-6 text-white/5 group-hover:text-purple-500/10 transition-colors"><i data-lucide="layers" size="100"></i></div>
@@ -2083,11 +2105,11 @@
                                 </div>
                             </button>
                         </div>
-                        <div class="pt-5">
-                            <button onclick="showHypnoAbout()" class="w-full py-3 rounded-2xl border border-purple-500/30 text-purple-200 text-sm hover:bg-purple-500/10 transition flex items-center justify-center gap-2 serif-font">
-                                <i data-lucide="info"></i> About &amp; How to Use
-                            </button>
-                        </div>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 p-4 pt-5 bg-gradient-to-t from-black via-black/95 to-transparent">
+                        <button onclick="showHypnoAbout()" class="w-full py-3 rounded-2xl border border-purple-500/35 bg-black/40 text-purple-200 text-sm hover:bg-purple-500/10 transition flex items-center justify-center gap-2 serif-font shadow-[0_8px_24px_rgba(0,0,0,0.35)]">
+                            <i data-lucide="info"></i> About &amp; How to Use
+                        </button>
                     </div>
                 </div>
             `;
