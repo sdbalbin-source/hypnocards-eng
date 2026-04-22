@@ -116,9 +116,7 @@ body::-webkit-scrollbar,
 }
 
 body{
-  background:radial-gradient(circle at 20% 20%, rgba(152, 101, 255, 0.14), transparent 40%),
-             radial-gradient(circle at 80% 30%, rgba(115, 217, 255, 0.12), transparent 44%),
-             linear-gradient(180deg, #050408 0%, #0c0918 100%);
+  background:linear-gradient(180deg, #07070b 0%, #0c0d13 55%, #10131a 100%);
   color:var(--text);
   font-family:var(--font-ui);
   margin:0; padding:1rem; line-height:1.6;
@@ -139,27 +137,6 @@ body{
 label,
 .activity-label{
   font-family:var(--font-serif);
-}
-body::before{
-  content:"";
-  position:fixed;
-  inset:-20vmax;
-  margin:auto;
-  width:95vmax;
-  height:95vmax;
-  border-radius:50%;
-  background:
-    radial-gradient(circle at center, rgba(196, 164, 255, 0.16) 0%, rgba(196, 164, 255, 0.1) 20%, rgba(196, 164, 255, 0) 58%),
-    repeating-radial-gradient(circle at center, rgba(201, 170, 255, 0.12) 0 1px, rgba(0,0,0,0) 7px 17px);
-  filter:blur(1.2px);
-  opacity:.42;
-  animation:plannerSpiralRotate 13s linear infinite;
-  pointer-events:none;
-  z-index:0;
-}
-@keyframes plannerSpiralRotate{
-  from{ transform:rotate(0deg); }
-  to{ transform:rotate(360deg); }
 }
 
 .site-container{ max-width:1280px; margin:0 auto; padding:0 0.75rem; position:relative; z-index:1; }
@@ -454,15 +431,21 @@ body::before{
   .stepper{
     justify-content:stretch;
     display:grid;
-    grid-template-columns:repeat(4, minmax(0,1fr));
-    gap:0.42rem;
+    grid-template-columns:repeat(4, minmax(74px, 1fr));
+    gap:0.38rem;
     padding-bottom:0.15rem;
   }
   .step-btn{
-    min-height:40px;
-    padding:0.42rem 0.5rem;
-    font-size:0.83rem;
+    min-height:46px;
+    padding:0.35rem 0.42rem;
+    font-size:0.78rem;
+    line-height:1.12;
     text-align:center;
+    border-radius:14px;
+    white-space:normal;
+    word-break:normal;
+    overflow-wrap:normal;
+    hyphens:none;
   }
   .chapter{ padding:0.9rem; margin:0.75rem 0 1.2rem; border-radius:15px; }
   .chapter-title{ font-size:1.35rem; margin-bottom:0.9rem; }
