@@ -146,11 +146,11 @@ body::before{
 
 .site-container{ max-width:1280px; margin:0 auto; padding:0 0.75rem; position:relative; z-index:1; }
 
-/* Header sticky */
+/* Header */
 .site-header{
   background:linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%);
   backdrop-filter:blur(8px);
-  position:sticky; top:0; z-index:50;
+  position:relative; z-index:20;
   padding-bottom:0.5rem;
   border-bottom:1px solid var(--border);
   border-radius:16px;
@@ -386,19 +386,15 @@ body::before{
 /* Responsive tweaks */
 @media (min-width:901px){
   .activity-list{
-    max-width:1120px;
+    max-width:980px;
     margin-inline:auto;
   }
   .activity-row{
-    display:grid;
-    grid-template-columns:minmax(300px, 1.08fr) minmax(410px, 1fr);
-    align-items:center;
-    column-gap:1rem;
-    row-gap:0.3rem;
-    padding:0.58rem 0;
+    display:block;
+    padding:0.55rem 0;
   }
   .activity-label{
-    font-size:0.99rem;
+    font-size:1rem;
     line-height:1.32;
     min-width:0;
   }
@@ -406,8 +402,8 @@ body::before{
     overflow-wrap:anywhere;
   }
   .controls-wrap{
-    margin-top:0;
-    justify-content:flex-end;
+    margin-top:0.34rem;
+    justify-content:flex-start;
     gap:0.62rem;
     flex-wrap:wrap;
   }
@@ -474,8 +470,8 @@ body::before{
 </head>
 <body>
 <div class="site-container">
-    <!-- Header (sticky) + Stepper -->
-    <header class="site-header sticky">
+    <!-- Header + Stepper -->
+    <header class="site-header">
       <h1 class="app-title">Scene Planner</h1>
       <p class="subtitle">Consent Protocol — BDSM Session Planner</p>
 
@@ -1245,6 +1241,7 @@ body::before{
           <div class="session-col session-col-1">
             <div class="session-col-title">Session Details</div>
             <div class="row"><span class="lbl">Session name:</span> <span id="summarySessionName"></span></div>
+            <div class="row"><span class="lbl">Name/Nickname:</span> <span id="summaryNickname"></span></div>
             <div class="row"><span class="lbl">Role:</span> <span id="summaryRole"></span></div>
             <div class="row"><span class="lbl">Duration:</span> <span id="summaryDuration"></span></div>
             <div class="row"><span class="lbl">Pronouns:</span> <span id="summaryPronouns"></span></div>
@@ -1327,6 +1324,7 @@ body::before{
 
           <!-- Share/print -->
           <div class="actions" id="shareActionsBottom" style="margin-top:1rem;">
+            <button class="btn ghost" id="saveSessionBtn" type="button">💾 Save Session</button>
             <button class="btn" id="copyLinkBottom" type="button">🔗 Copy link</button>
             <button class="btn" id="printSummaryBtn" type="button">🖨️ Print/Export Summary</button>
             <button class="btn" id="finishSessionBtn" type="button">✅ Finish Session</button>
@@ -1377,7 +1375,6 @@ body::before{
     const sessionIdFromUrl = urlParams.get('sessionId') || '';
     const startChapterFromUrl = urlParams.get('startChapter') || '';
     let activeSessionId = sessionIdFromUrl || `planner-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    let autosaveTimer = null;
 
     function cloneState() {
       return JSON.parse(JSON.stringify(state));
@@ -1440,10 +1437,6 @@ body::before{
       if (existingIx >= 0) sessions[existingIx] = payload;
       else sessions.unshift(payload);
       writeSessionsSafe(sessions.slice(0, 100));
-    }
-    function scheduleAutosave() {
-      clearTimeout(autosaveTimer);
-      autosaveTimer = setTimeout(saveActiveSession, 240);
     }
     function loadSessionFromStorageIfPresent() {
       if (!sessionIdFromUrl) return;
@@ -2393,6 +2386,7 @@ body::before{
       // Session box: fill 3 columns
       const fill = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
       fill('summarySessionName', state.session.sessionName || '—');
+      fill('summaryNickname', state.session.nickname || '—');
       fill('summaryRole', state.session.role ? ({dom:'Dom',sub:'Sub','switch':'Switch'}[state.session.role]) : '—');
       fill('summaryDuration', state.session.duration ? `${state.session.duration} min` : '—');
       fill('summaryPronouns', (state.session.pronouns||[]).join(' • ') || '—');
@@ -2689,6 +2683,7 @@ body::before{
 
     /* ========= Share / Print ========= */
     function setupActions(){
+      const saveSessionBtn = document.getElementById('saveSessionBtn');
       const copyLinkBottom = document.getElementById('copyLinkBottom');
       const printSummaryBtn = document.getElementById('printSummaryBtn');
       const finishSessionBtn = document.getElementById('finishSessionBtn');
@@ -2701,6 +2696,10 @@ body::before{
         window.print();
       }
 
+      saveSessionBtn?.addEventListener('click', () => {
+        saveActiveSession();
+        alert('Session saved.');
+      });
       copyLinkBottom?.addEventListener('click', doCopy);
       printSummaryBtn?.addEventListener('click', printSummary);
       finishSessionBtn?.addEventListener('click', () => {
@@ -2744,12 +2743,6 @@ body::before{
       });
 
       updatePerspectiveBadges();
-      saveActiveSession();
-      document.addEventListener('input', scheduleAutosave, true);
-      document.addEventListener('change', scheduleAutosave, true);
-      document.addEventListener('click', e => {
-        if (e.target && e.target.closest && e.target.closest('.chip, .step-btn, .btn')) scheduleAutosave();
-      }, true);
     }
 
     loadSessionFromStorageIfPresent();
