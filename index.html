@@ -672,8 +672,8 @@
         const THEME_ORDER = ['Freedom','Joy','Mischief','Playfulness','Safety & Trust','Relaxation','Pleasure','Desire','Sexy','Wildness'];
         const DEFAULT_EXCLUDED_CATEGORIES = ['Deepeners', 'Convincers', 'Triggers', 'Pleasure Metaphors'];
         const CANONICAL_ORIGIN = 'https://hypnocards-eng.pages.dev';
-        const APP_BUILD = 'build-canonical-2026-04-22-mobile-spread-no-edge-cut';
-        const SW_BUILD = '2026-04-22-21';
+        const APP_BUILD = 'build-canonical-2026-04-22-mobile-spread-left-bias';
+        const SW_BUILD = '2026-04-22-22';
 
         const AppState = {
             rawRows: [],          
@@ -1118,7 +1118,7 @@
             const horizontalSafeHalf = (stageWidth / 2) - rotatedHalfWidth - (isMobileSpread ? 10 : 8);
             const radiusByWidth = horizontalSafeHalf / Math.max(0.001, Math.sin(maxAngleRad));
             const radius = Math.max(150, Math.min(272, radiusByWidth, stageWidth * (isMobileSpread ? 0.44 : 0.56)));
-            const centerX = 0;
+            const centerX = isMobileSpread ? -22 : 0;
             const centerY = Math.max(72, Math.min(152, stageHeight * (isMobileSpread ? 0.19 : 0.24)));
             const dealStartX = -Math.max(126, stageWidth * 0.42);
             const dealStartY = Math.max(82, stageHeight * 0.16);

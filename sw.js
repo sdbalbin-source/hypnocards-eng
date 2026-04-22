@@ -1,4 +1,4 @@
-﻿const CACHE = 'hypnocards-v27';
+﻿const CACHE = 'hypnocards-v28';
 const ASSETS = [
   '/',
   '/index.html',
