@@ -657,8 +657,8 @@
         const THEME_ORDER = ['Freedom','Joy','Mischief','Playfulness','Safety & Trust','Relaxation','Pleasure','Desire','Sexy','Wildness'];
         const DEFAULT_EXCLUDED_CATEGORIES = ['Deepeners', 'Convincers', 'Triggers', 'Pleasure Metaphors'];
         const CANONICAL_ORIGIN = 'https://hypnocards-eng.pages.dev';
-        const APP_BUILD = 'build-canonical-2026-04-22-hypno-foundations-sections';
-        const SW_BUILD = '2026-04-22-11';
+        const APP_BUILD = 'build-canonical-2026-04-22-hypno-about-layout-colors';
+        const SW_BUILD = '2026-04-22-12';
 
         const AppState = {
             rawRows: [],          
@@ -1490,6 +1490,9 @@
             const app = document.getElementById('app');
             const intro = Array.isArray(HYPNO_GUIDEBOOK_DATA.intro) ? HYPNO_GUIDEBOOK_DATA.intro : [];
             const categories = Array.isArray(HYPNO_GUIDEBOOK_DATA.categories) ? HYPNO_GUIDEBOOK_DATA.categories : [];
+            const hypnoColorMap = Object.fromEntries(
+                (AppState.categories || []).map(c => [normalizeCategoryKey(c.name), c.color || '#a855f7'])
+            );
             const foundationTitles = [
                 'A Note Before You Begin',
                 'What Is HypnoErotica?',
@@ -1532,15 +1535,16 @@
             const categoriesHtml = categories.length
                 ? categories.map(c => {
                     const content = (c.content || []).map(p => `<p class="text-gray-300 serif-font text-sm leading-relaxed">${escapeHtmlArchetype(p)}</p>`).join('');
+                    const catColor = hypnoColorMap[normalizeCategoryKey(c.name)] || '#a855f7';
                     return `
-                        <details id="hypno-cat-${c.number}" class="bg-white/5 border border-purple-500/20 rounded-2xl p-4">
+                        <details id="hypno-cat-${c.number}" class="bg-white/[0.04] rounded-2xl p-4 shadow-[0_8px_28px_rgba(0,0,0,0.28)]" style="border:1px solid ${catColor}55">
                             <summary class="cursor-pointer list-none">
                                 <div class="flex items-center justify-between gap-3">
                                     <div>
-                                        <p class="text-[0.68rem] tracking-[0.2em] uppercase text-purple-300/80 font-mono">Category ${c.number}</p>
+                                        <p class="text-[0.68rem] tracking-[0.2em] uppercase font-mono" style="color:${catColor}">Category ${c.number}</p>
                                         <h3 class="text-xl text-white serif-font font-bold">${escapeHtmlArchetype(c.name)}</h3>
                                     </div>
-                                    <span class="text-purple-300 text-xs font-mono">Tap to open</span>
+                                    <span class="text-xs font-mono" style="color:${catColor}">Tap to open</span>
                                 </div>
                             </summary>
                             <div class="mt-4 space-y-3">${content}</div>
@@ -1989,7 +1993,7 @@
                     <div class="flex items-center justify-between mb-10 pt-4 gap-3">
                         <button onclick="renderWelcome()" class="p-3 bg-white/5 rounded-full hover:bg-white/10 transition"><i data-lucide="arrow-left"></i></button>
                         <h2 class="text-2xl font-bold text-white serif-font text-center">Hypnoerotic Language Cards</h2>
-                        <button onclick="showHypnoAbout()" class="p-2 bg-white/5 rounded-full hover:bg-white/10 transition"><i data-lucide="info"></i></button>
+                        <div class="w-10"></div>
                     </div>
 
                     <div class="grid gap-6">
@@ -2015,6 +2019,11 @@
                                     <p class="text-gray-500 text-xs">${AppState.recordings.length} saved recordings</p>
                                 </div>
                             </div>
+                        </button>
+                    </div>
+                    <div class="pt-5">
+                        <button onclick="showHypnoAbout()" class="w-full py-3 rounded-2xl border border-purple-500/30 text-purple-200 text-sm hover:bg-purple-500/10 transition flex items-center justify-center gap-2 serif-font">
+                            <i data-lucide="info"></i> About
                         </button>
                     </div>
                 </div>
