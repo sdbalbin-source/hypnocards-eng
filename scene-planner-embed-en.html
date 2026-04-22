@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Scene Planner | Consent Protocol</title>
   <style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
 /* צ'יפים נבחרים בפרק 5 — חיובי/שלילי */
 .chip.active.chip-green {
   background: #3ec97a;
@@ -85,8 +86,10 @@
     gap: 0.7rem;
   }
 }
-/* Google Font already loaded in index.html (Rubik) */
+/* Planner-local fonts (iframe does not inherit index.html fonts) */
 :root{
+  --font-serif:'Cormorant Garamond', serif;
+  --font-ui:'Inter', -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   --bg:#050408;
   --surface:rgba(255,255,255,0.07);
   --text:#f3f1ff;
@@ -117,10 +120,25 @@ body{
              radial-gradient(circle at 80% 30%, rgba(115, 217, 255, 0.12), transparent 44%),
              linear-gradient(180deg, #050408 0%, #0c0918 100%);
   color:var(--text);
-  font-family:'Rubik', -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  font-family:var(--font-ui);
   margin:0; padding:1rem; line-height:1.6;
   position:relative;
   overflow-x:hidden;
+}
+.app-title,
+.subtitle,
+.chapter-title,
+.section-title,
+.session-col-title,
+.summary-card h4,
+.summary-subtitle,
+.step-btn,
+.btn,
+.chip,
+.choice-btn,
+label,
+.activity-label{
+  font-family:var(--font-serif);
 }
 body::before{
   content:"";
@@ -238,7 +256,7 @@ body::before{
 .text-input,.textarea-input{
   width:100%; background:var(--bg); color:var(--text);
   border:1px solid var(--border); border-radius:10px; padding:0.8rem; font-size:1rem;
-  font-family:'Rubik', -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  font-family:var(--font-ui);
 }
 .textarea-input{ min-height:120px; resize:vertical }
 .inline-with-info{ display:flex; gap:0.5rem; align-items:center }
