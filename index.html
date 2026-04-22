@@ -243,7 +243,6 @@
             animation: archetypePackRight 1.75s cubic-bezier(0.45, 0, 0.2, 1) forwards;
         }
         .archetype-shuffle-card {
-            position: relative;
             position: absolute;
             inset: 0;
             border-radius: 5px;
@@ -529,13 +528,6 @@
             text-align: center;
             line-height: 1.45;
         }
-        .archetype-list-teaser {
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
         /* Animations */
         .slide-out-left { animation: slideOutLeft 0.3s forwards; }
         .slide-in-right { animation: slideInRight 0.3s forwards; }
@@ -665,8 +657,8 @@
         const THEME_ORDER = ['Freedom','Joy','Mischief','Playfulness','Safety & Trust','Relaxation','Pleasure','Desire','Sexy','Wildness'];
         const DEFAULT_EXCLUDED_CATEGORIES = ['Deepeners', 'Convincers', 'Triggers', 'Pleasure Metaphors'];
         const CANONICAL_ORIGIN = 'https://hypnocards-eng.pages.dev';
-        const APP_BUILD = 'build-canonical-2026-04-22-archetype-home-custom';
-        const SW_BUILD = '2026-04-22-08';
+        const APP_BUILD = 'build-canonical-2026-04-22-cleanup-pass';
+        const SW_BUILD = '2026-04-22-09';
 
         const AppState = {
             rawRows: [],          
@@ -949,14 +941,6 @@
                 blocks.pop();
             }
             return blocks.join('\n\n');
-        }
-
-        function archetypeTeaserLine(card) {
-            const e = (card.essence || '').replace(/\s+/g, ' ').trim();
-            if (!e) return '';
-            const m = e.match(/^.{20,160}?[.!?](?=\s|$)/);
-            const first = m ? m[0] : e.slice(0, 140);
-            return first.length < e.length && !m ? first.trim() + '...' : first.trim();
         }
 
         function pruneArchetypeFavorites() {
@@ -1541,14 +1525,30 @@
                     </div>
                     <div class="flex-1 overflow-y-auto px-6 pb-10 space-y-6 no-scrollbar">
                         <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
-                            <p class="text-gray-300 serif-font text-base leading-relaxed">Each card pairs a visual face (your artwork) with a full "booklet" face: Essence, Gift, Shadow, Practice, and a closing question, mirroring the Archetypes of Pleasure companion booklet.</p>
+                            <p class="text-gray-300 serif-font text-base leading-relaxed">Archetypes of Pleasure is an invitation to meet desire through image, role, and embodiment. Each card is not an instruction manual - it is a doorway into a living character and a fuller erotic range.</p>
                         </div>
                         <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
-                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">How to use</h3>
+                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Core ideas</h3>
                             <div class="space-y-3 text-gray-300 serif-font text-sm leading-relaxed">
-                                <p><strong class="text-white">Shuffle &amp; Draw</strong> runs a short deck animation, then reveals a random archetype.</p>
-                                <p><strong class="text-white">Tap the card</strong> to turn it and read the full text. Typography is tuned for comfortable reading on a phone.</p>
-                                <p><strong class="text-white">All Cards</strong> is sorted by realm and includes a one-tap favorite star on each card. <strong class="text-white">Custom Deck</strong> lets you draw from selected realms and/or the favorites set.</p>
+                                <p><strong class="text-white">Light and shadow:</strong> every archetype has a gift and a shadow. We explore both with curiosity, not judgment.</p>
+                                <p><strong class="text-white">Power of image:</strong> physical touch plus story creates deeper meaning, stronger arousal, and richer memory.</p>
+                                <p><strong class="text-white">Not disguise - embodiment:</strong> role-play is a way to access authentic parts of self that daily life may suppress.</p>
+                            </div>
+                        </div>
+                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">How to use in this app</h3>
+                            <div class="space-y-3 text-gray-300 serif-font text-sm leading-relaxed">
+                                <p><strong class="text-white">Shuffle &amp; Draw:</strong> random draw for surprise and spontaneity.</p>
+                                <p><strong class="text-white">Custom Deck:</strong> choose specific realms and/or your favorites set before drawing.</p>
+                                <p><strong class="text-white">All Cards:</strong> browse by realm, star cards you want to keep active, and open any card directly.</p>
+                            </div>
+                        </div>
+                        <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+                            <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">Safety and awareness</h3>
+                            <div class="space-y-2 text-gray-300 serif-font text-sm leading-relaxed">
+                                <p><strong class="text-white">Consent first:</strong> agree before entering a role.</p>
+                                <p><strong class="text-white">Safe word always:</strong> anyone can pause or stop at any moment.</p>
+                                <p><strong class="text-white">Integration:</strong> give space afterward for reflection and emotional processing.</p>
                             </div>
                         </div>
                     </div>
@@ -1622,6 +1622,11 @@
         function renderArchetypeDeckBuilder() {
             const app = document.getElementById('app');
             const realms = getArchetypeRealms();
+            const realmCounts = {};
+            ARCHETYPES_DATA.forEach(card => {
+                const r = String(card.realm || 'Other').trim() || 'Other';
+                realmCounts[r] = (realmCounts[r] || 0) + 1;
+            });
             const row = (key, label, subtitle) => {
                 const active = AppState.selectedArchetypeDeckKeys.includes(key);
                 return `
@@ -1648,7 +1653,7 @@
                     </div>
                     <div class="flex-1 overflow-y-auto px-6 pb-6 space-y-3 no-scrollbar">
                         ${row('__favorites__', 'Favorites set', `${AppState.archetypeFavorites.length} cards currently starred`)}
-                        ${realms.map(r => row(r, r, 'Realm set')).join('')}
+                        ${realms.map(r => row(r, r, `${realmCounts[r] || 0} cards`)).join('')}
                     </div>
                     <div class="px-6 pb-8">
                         <button onclick="startArchetypeSpreadDraw(getCustomArchetypePool(), 'custom')" class="w-full py-3 rounded-2xl border border-amber-500/35 bg-gradient-to-b from-amber-950/40 to-black/40 text-amber-100 text-sm font-mono tracking-wide hover:border-amber-400/50 transition-colors">
@@ -2013,7 +2018,7 @@
             if (playbackRaf) cancelAnimationFrame(playbackRaf);
             playbackRaf = null;
             const btn = document.getElementById('playerPlayPauseBtn');
-            if (btn) btn.textContent = 'â–¶';
+            if (btn) btn.textContent = '▶';
         }
 
         function openRecordingPlayer(recordingId) {
@@ -2054,12 +2059,12 @@
                         <div class="flex items-start justify-between gap-4 mb-3">
                             <div>
                                 <div class="text-white font-bold serif-font">${rec.name}</div>
-                                <div class="text-xs text-gray-400">${rec.date} Â· ${rec.theme}</div>
+                                <div class="text-xs text-gray-400">${rec.date} · ${rec.theme}</div>
                             </div>
-                            <button onclick="closeRecordingPlayer()" class="p-2 bg-white/10 rounded-full text-gray-300 hover:bg-white/20">âœ•</button>
+                            <button onclick="closeRecordingPlayer()" class="p-2 bg-white/10 rounded-full text-gray-300 hover:bg-white/20">✕</button>
                         </div>
                         <div class="flex items-center gap-3 mb-2">
-                            <button id="playerPlayPauseBtn" onclick="togglePlayerPlayPause()" class="p-2 bg-purple-600/20 text-purple-300 rounded-full hover:bg-purple-600/30 transition">â–¶</button>
+                            <button id="playerPlayPauseBtn" onclick="togglePlayerPlayPause()" class="p-2 bg-purple-600/20 text-purple-300 rounded-full hover:bg-purple-600/30 transition">▶</button>
                             <input id="playerProgress" type="range" min="0" max="100" value="0" oninput="seekRecordingPlayback(${recordingId}, this.value)" class="flex-1 accent-purple-500">
                         </div>
                         <div class="flex justify-between text-[0.72rem] text-gray-400 font-mono">
@@ -2088,12 +2093,12 @@
                 stopPlaybackUi();
                 return;
             }
-            if (btn) btn.textContent = 'â¸';
+            if (btn) btn.textContent = '⏸';
             playbackAudio.play().then(() => {
                 stopPlaybackUi();
                 updatePlaybackUi(playbackRecordingId);
             }).catch(() => {
-                if (btn) btn.textContent = 'â–¶';
+                if (btn) btn.textContent = '▶';
                 alert('Could not play this recording on this device.');
             });
         }
@@ -2200,7 +2205,7 @@
                                 <!-- Back face: Category Info -->
                                 <div id="cardBack" class="card-face-back flex flex-col">
                                     <!-- Info button (back) -->
-                                    <button class="info-btn" onclick="toggleCardFlip()" title="Back to card">âœ•</button>
+                                    <button class="info-btn" onclick="toggleCardFlip()" title="Back to card">✕</button>
 
                                     <div class="card-header-fixed" style="background:linear-gradient(to bottom,rgba(80,20,120,0.9),transparent)">
                                         <p style="font-size:0.7rem;letter-spacing:0.15em;color:#a855f7;font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:0.5rem">Pattern Type</p>
