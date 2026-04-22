@@ -2762,26 +2762,40 @@ label,
       });
       return jsPdfLoader;
     }
+    function isMobileDevice(){
+      return /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent || '');
+    }
     async function captureSummaryCanvas(){
       if (!document.getElementById('chapter-8')?.classList.contains('visible')) {
         showChapter('chapter-8');
-        await new Promise(r=> setTimeout(r, 80));
+        await new Promise(r=> setTimeout(r, 140));
       }
       const target = document.getElementById('chapter-8');
       if (!target) throw new Error('Summary section is not available.');
       const html2canvas = await ensureHtml2Canvas();
       const prevMaxHeight = target.style.maxHeight;
-      target.style.maxHeight = 'none';
-      const canvas = await html2canvas(target, {
-        backgroundColor: '#0b0d14',
-        scale: Math.min(2, window.devicePixelRatio || 1.5),
-        useCORS: true,
-        logging: false,
-        windowWidth: document.documentElement.clientWidth,
-        windowHeight: Math.max(target.scrollHeight, target.clientHeight)
-      });
-      target.style.maxHeight = prevMaxHeight;
-      return canvas;
+      try {
+        target.style.maxHeight = 'none';
+        await new Promise(r=> setTimeout(r, 80));
+        const mobile = isMobileDevice();
+        const scaleBase = window.devicePixelRatio || 1;
+        const renderScale = mobile
+          ? Math.min(1.35, Math.max(1, scaleBase))
+          : Math.min(2, Math.max(1.2, scaleBase));
+        const canvas = await html2canvas(target, {
+          backgroundColor: '#0b0d14',
+          scale: renderScale,
+          useCORS: true,
+          logging: false,
+          windowWidth: Math.max(document.documentElement.clientWidth, target.scrollWidth || 0),
+          windowHeight: Math.max(target.scrollHeight, target.clientHeight),
+          scrollX: 0,
+          scrollY: 0
+        });
+        return canvas;
+      } finally {
+        target.style.maxHeight = prevMaxHeight;
+      }
     }
     async function createSummaryPdfBlob(){
       const jsPDF = await ensureJsPdf();
@@ -2789,8 +2803,10 @@ label,
       if (!jsPDF) throw new Error('jsPDF unavailable');
       const target = document.getElementById('chapter-8');
       if (!target) throw new Error('Summary section is not available.');
+      const mobile = isMobileDevice();
       // Primary path: native jsPDF html pagination (best text fidelity).
       try {
+        if (mobile) throw new Error('Skip html renderer on mobile for stability');
         const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4', compress: true });
         const margin = 18;
         const pageWidth = pdf.internal.pageSize.getWidth();
@@ -2850,25 +2866,33 @@ label,
         try {
           const blob = await createSummaryPdfBlob();
           const safeName = String(state.session.sessionName || 'session-summary').replace(/[^\w\-]+/g, '-').slice(0, 48) || 'session-summary';
-          const file = new File([blob], `${safeName}.pdf`, { type: 'application/pdf' });
-          if (navigator.share && navigator.canShare && navigator.canShare({ files:[file] })) {
-            await navigator.share({ title: 'Kinky Scene Planner Summary (PDF)', files:[file] });
-            return;
+          const supportsFileCtor = typeof File === 'function';
+          if (supportsFileCtor && navigator.share && navigator.canShare) {
+            try {
+              const file = new File([blob], `${safeName}.pdf`, { type: 'application/pdf' });
+              if (navigator.canShare({ files:[file] })) {
+                await navigator.share({ title: 'Kinky Scene Planner Summary (PDF)', files:[file] });
+                return;
+              }
+            } catch (_) {
+              // Continue to download/open fallback.
+            }
           }
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
           a.download = `${safeName}.pdf`;
+          a.target = '_blank';
+          a.rel = 'noopener';
           document.body.appendChild(a);
           a.click();
           a.remove();
-          URL.revokeObjectURL(url);
-          alert('PDF downloaded. You can now share it.');
+          setTimeout(() => URL.revokeObjectURL(url), 60000);
+          alert('PDF created. If your browser did not auto-download, it should open in a new tab for sharing/saving.');
         } catch (err){
           if (err && err.name === 'AbortError') return;
           console.error('shareAsPdf failed:', err);
-          alert('Automatic PDF sharing failed. Opening Print/Save as PDF as fallback.');
-          window.print();
+          alert('PDF generation failed on this attempt. Please try again once after a few seconds. If it still fails, use Print/Save as PDF as fallback.');
         } finally {
           if (sharePdfBtn) {
             sharePdfBtn.disabled = false;
