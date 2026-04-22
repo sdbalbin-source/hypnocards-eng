@@ -639,6 +639,21 @@
             margin: 0.8rem auto;
         }
         .mask-linear { mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent); }
+        .startup-loader {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background:
+                repeating-conic-gradient(
+                    from 0deg,
+                    rgba(196, 141, 255, 0.92) 0deg 12deg,
+                    rgba(120, 70, 190, 0.25) 12deg 22deg
+                );
+            -webkit-mask: radial-gradient(circle at center, transparent 33%, #000 35%);
+            mask: radial-gradient(circle at center, transparent 33%, #000 35%);
+            box-shadow: 0 0 28px rgba(168, 85, 247, 0.35);
+            animation: spinSpiral 1.7s linear infinite;
+        }
     </style>
 </head>
 <body>
@@ -679,7 +694,12 @@
     </div>
     <div class="vignette"></div>
 
-    <div id="app" class="h-screen w-full max-w-md md:max-w-[1280px] mx-auto relative flex flex-col"></div>
+    <div id="app" class="h-screen w-full max-w-md md:max-w-[1280px] mx-auto relative flex flex-col">
+        <div class="flex-1 flex flex-col items-center justify-center gap-4">
+            <div class="startup-loader" aria-hidden="true"></div>
+            <p class="text-[0.7rem] tracking-[0.2em] uppercase text-purple-200/70" style="font-family:'DM Mono',monospace">Loading Studio</p>
+        </div>
+    </div>
 
     <script>
         // --- 1. State Management ---
@@ -1470,21 +1490,18 @@
                         <p class="text-gray-400 mt-2 text-xs tracking-[0.25em] uppercase" style="font-family:'DM Mono',monospace">Three integrated practice tools</p>
                     </div>
 
-                    <button onclick="renderModeSelect()" class="w-full max-w-sm py-4 px-4 bg-white/10 border border-fuchsia-300/20 rounded-2xl text-white text-lg font-bold hover:bg-white/20 transition-all mb-3 flex items-center justify-start gap-3 shadow-lg shadow-purple-900/20 serif-font text-left">
-                        <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-fuchsia-300/10 border border-fuchsia-300/25 text-fuchsia-200 shrink-0"><i data-lucide="book-open" class="w-5 h-5"></i></span>
-                        <span>Hypnoerotic Language Cards</span>
+                    <button onclick="renderModeSelect()" class="w-full max-w-sm py-5 px-5 bg-white/10 border border-fuchsia-300/20 rounded-2xl text-white text-xl font-bold hover:bg-white/20 transition-all mb-3 flex items-center justify-center shadow-lg shadow-purple-900/20 serif-font text-center">
+                        Hypnoerotic Language Cards
                     </button>
-                    <button onclick="renderArchetypesHome()" class="w-full max-w-sm py-4 px-4 bg-white/10 border border-violet-300/20 rounded-2xl text-white text-lg font-bold hover:bg-white/20 transition-all mb-3 flex items-center justify-start gap-3 shadow-lg shadow-purple-900/20 serif-font text-left">
-                        <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-violet-300/10 border border-violet-300/25 text-violet-200 shrink-0"><i data-lucide="image" class="w-5 h-5"></i></span>
-                        <span>Archetypes of Pleasure</span>
+                    <button onclick="renderArchetypesHome()" class="w-full max-w-sm py-5 px-5 bg-white/10 border border-violet-300/20 rounded-2xl text-white text-xl font-bold hover:bg-white/20 transition-all mb-3 flex items-center justify-center shadow-lg shadow-purple-900/20 serif-font text-center">
+                        Archetypes of Pleasure
                     </button>
-                    <button onclick="renderKinkyScenePlannerHome()" class="w-full max-w-sm py-4 px-4 bg-white/10 border border-blue-300/20 rounded-2xl text-white text-lg font-bold hover:bg-white/20 transition-all mb-5 flex items-center justify-start gap-3 shadow-lg shadow-purple-900/20 serif-font text-left">
-                        <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-blue-300/10 border border-blue-300/25 text-blue-200 shrink-0"><i data-lucide="handshake" class="w-5 h-5"></i></span>
-                        <span>Kinky Scene Planner</span>
+                    <button onclick="renderKinkyScenePlannerHome()" class="w-full max-w-sm py-5 px-5 bg-white/10 border border-blue-300/20 rounded-2xl text-white text-xl font-bold hover:bg-white/20 transition-all mb-5 flex items-center justify-center shadow-lg shadow-purple-900/20 serif-font text-center">
+                        Kinky Scene Planner
                     </button>
 
-                    <button onclick="showAbout()" class="w-full max-w-xs py-3 rounded-2xl border border-purple-500/20 text-purple-300 text-sm hover:bg-purple-500/10 transition flex items-center justify-center gap-2 serif-font">
-                        <i data-lucide="info"></i> General About
+                    <button onclick="showAbout()" class="w-full max-w-xs py-3 rounded-2xl border border-purple-500/20 text-purple-300 text-base hover:bg-purple-500/10 transition flex items-center justify-center serif-font">
+                        General About
                     </button>
 
                     <button onclick="clearData()" class="absolute bottom-6 text-xs text-gray-600 hover:text-red-400 transition opacity-60 hover:opacity-100">Reset all data</button>
