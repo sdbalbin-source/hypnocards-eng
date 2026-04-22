@@ -2967,11 +2967,12 @@ label,
             : await createSummaryPdfBlob();
           const safeName = String(state.session.sessionName || 'session-summary').replace(/[^\w\-]+/g, '-').slice(0, 48) || 'session-summary';
           const supportsFileCtor = typeof File === 'function';
-          if (supportsFileCtor && navigator.share && navigator.canShare) {
+          if (supportsFileCtor && navigator.share) {
             try {
               const file = new File([blob], `${safeName}.pdf`, { type: 'application/pdf' });
-              if (navigator.canShare({ files:[file] })) {
-                await navigator.share({ title: 'Kinky Scene Planner Summary (PDF)', files:[file] });
+              const sharePayload = { title: 'Kinky Scene Planner Summary (PDF)', files:[file] };
+              if (!navigator.canShare || navigator.canShare(sharePayload)) {
+                await navigator.share(sharePayload);
                 return;
               }
             } catch (_) {
