@@ -315,8 +315,15 @@ label,
   display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:0.8rem;
   border:1px solid var(--border); border-radius:12px; padding:0.8rem; background:#00000018; margin-bottom:1rem;
 }
-.session-box .row{ display:flex; gap:0.4rem; align-items:center; padding:0.15rem 0 }
-.session-box .lbl{ color:var(--text-muted) }
+.session-box .row{
+  display:flex; gap:0.4rem; align-items:center; padding:0.15rem 0;
+  font-family:var(--font-serif); font-size:1rem;
+}
+.session-box .lbl{
+  color:var(--text-muted);
+  font-family:var(--font-serif);
+  font-weight:600;
+}
 
 /* Filters (Summary) */
 .filters{ display:flex; flex-direction:column; align-items:stretch; gap:0.55rem; margin:0.6rem 0 1rem }
@@ -340,6 +347,15 @@ label,
 .summary-tags{ display:flex; flex-wrap:wrap; gap:0.4rem; }
 .summary-tag{
   border-radius:999px; padding:0.25rem 0.6rem; font-size:0.95rem; border:1px solid var(--border); background:#00000022;
+  font-family:var(--font-serif); font-weight:500;
+}
+.summary-refine-title{
+  color:var(--secondary);
+  font-family:var(--font-serif);
+  font-size:1rem;
+  font-weight:600;
+  margin-top:0.42rem;
+  margin-bottom:0.24rem;
 }
 .summary-tag-yes{ background:rgba(76,175,80,.2); border-color:rgba(76,175,80,.65); color:#e9ffe9 }
 .summary-tag-maybe{ background:rgba(255,193,7,.2); border-color:rgba(255,193,7,.7); color:#fff7d9 }
@@ -349,7 +365,10 @@ label,
 
 /* Consent + signature */
 .consent{ margin-top:1.25rem }
-.consent-text{ color:var(--text-muted); white-space:pre-line; font-size:1.07rem; line-height:1.7; margin-bottom:0.5rem; }
+.consent-text{
+  color:var(--text-muted); white-space:pre-line; font-size:1.07rem; line-height:1.7; margin-bottom:0.5rem;
+  font-family:var(--font-serif);
+}
 .consent-fields{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:0.6rem; margin-top:0.6rem }
 .signature-block{ margin-top:0.6rem }
 .sig-canvas-wrap{ width:100%; height:180px; background:#00000022; border:1px solid var(--border); border-radius:8px; overflow:hidden }
@@ -1367,6 +1386,11 @@ label,
         titlesDom:[], forbiddenTitlesDom:[],
         aftercareNeeds:[], aftercareDuration:[], postSession:[]
       },
+      consent:{
+        name:"",
+        date:"",
+        signatureDataUrl:""
+      },
       activities:{} // filled by buildActivities()
     };
     const STORAGE_KEY = 'planner_sessions_v1';
@@ -1408,6 +1432,7 @@ label,
       if (savedState.refinements && typeof savedState.refinements === 'object') Object.assign(state.refinements, savedState.refinements);
       if (savedState.text && typeof savedState.text === 'object') Object.assign(state.text, savedState.text);
       if (savedState.sets && typeof savedState.sets === 'object') Object.assign(state.sets, savedState.sets);
+      if (savedState.consent && typeof savedState.consent === 'object') Object.assign(state.consent, savedState.consent);
       if (savedState.activities && typeof savedState.activities === 'object') state.activities = savedState.activities;
     }
     function buildSummarySnapshot() {
@@ -2581,6 +2606,15 @@ label,
     }
 
     /* ========= Date ========= */
+    function bindConsentFields(){
+      const nameInput = document.getElementById('consentName');
+      if (nameInput){
+        nameInput.value = String(state.consent.name || '');
+        nameInput.addEventListener('input', ()=> {
+          state.consent.name = nameInput.value.trim();
+        });
+      }
+    }
     function setupDateField(){
       const input = document.getElementById('consentDate');
       const openBtn = document.getElementById('openDatePicker');
@@ -2598,10 +2632,16 @@ label,
       };
 
       const todayISO = toYYYYMMDD(new Date());
+      const savedDate = String(state.consent.date || '').trim();
+      if (savedDate) input.value = savedDate;
       if (!input.value) input.value = todayISO;
+      state.consent.date = input.value;
       display.textContent = toDDMMYYYY(input.value);
 
-      input.addEventListener('change', () => { display.textContent = toDDMMYYYY(input.value); });
+      input.addEventListener('change', () => {
+        state.consent.date = input.value;
+        display.textContent = toDDMMYYYY(input.value);
+      });
       if (openBtn) {
         openBtn.addEventListener('click', () => {
           if (typeof input.showPicker === 'function') input.showPicker();
@@ -2619,6 +2659,22 @@ label,
 
       const statePad = (canvas.__padState ||= { drawing:false, bound:false });
 
+      const drawSignatureFromState = () => {
+        const src = String(state.consent.signatureDataUrl || '').trim();
+        if (!src) return;
+        const img = new Image();
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0, canvas.clientWidth || canvas.width, canvas.clientHeight || canvas.height);
+        };
+        img.src = src;
+      };
+      const persistSignatureToState = () => {
+        try {
+          state.consent.signatureDataUrl = canvas.toDataURL('image/png');
+        } catch (_) {
+          // Ignore conversion failures on constrained devices.
+        }
+      };
       const resize = () => {
         const dpr = Math.max(window.devicePixelRatio || 1, 1);
         const w = canvas.clientWidth || canvas.parentElement.clientWidth || 600;
@@ -2632,6 +2688,7 @@ label,
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
         ctx.strokeStyle = '#ffffff';
+        drawSignatureFromState();
       };
       resize();
 
@@ -2659,6 +2716,7 @@ label,
       const end = (e) => {
         statePad.drawing = false;
         canvas.releasePointerCapture?.(e.pointerId || 0);
+        persistSignatureToState();
       };
 
       if (!statePad.bound) {
@@ -2671,7 +2729,10 @@ label,
 
       const clearBtn = document.getElementById('clearSignatureBtn');
       if (clearBtn && !clearBtn.__bound) {
-        clearBtn.addEventListener('click', () => { ctx.clearRect(0, 0, canvas.width, canvas.height); });
+        clearBtn.addEventListener('click', () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          state.consent.signatureDataUrl = '';
+        });
         clearBtn.__bound = true;
       }
 
@@ -2738,33 +2799,64 @@ label,
       if (!jsPDF) throw new Error('jsPDF unavailable');
       const target = document.getElementById('chapter-8');
       if (!target) throw new Error('Summary section is not available.');
-      const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4', compress: true });
-      const margin = 18;
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const renderWidth = pageWidth - (margin * 2);
-      const prevMaxHeight = target.style.maxHeight;
-      target.style.maxHeight = 'none';
-      await pdf.html(target, {
-        x: margin,
-        y: margin,
-        width: renderWidth,
-        windowWidth: Math.max(target.scrollWidth, document.documentElement.clientWidth, 920),
-        autoPaging: 'text',
-        html2canvas: {
-          scale: 1,
-          useCORS: true,
-          backgroundColor: '#0b0d14',
-          logging: false
+      // Primary path: native jsPDF html pagination (best text fidelity).
+      try {
+        const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4', compress: true });
+        const margin = 18;
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const renderWidth = pageWidth - (margin * 2);
+        const prevMaxHeight = target.style.maxHeight;
+        target.style.maxHeight = 'none';
+        await pdf.html(target, {
+          x: margin,
+          y: margin,
+          width: renderWidth,
+          windowWidth: Math.max(target.scrollWidth, document.documentElement.clientWidth, 920),
+          autoPaging: 'text',
+          html2canvas: {
+            scale: 1,
+            useCORS: true,
+            backgroundColor: '#0b0d14',
+            logging: false
+          }
+        });
+        target.style.maxHeight = prevMaxHeight;
+        return pdf.output('blob');
+      } catch (_) {
+        // Fallback path: render summary to canvas and paginate image slices.
+        const canvas = await captureSummaryCanvas();
+        const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4', compress: true });
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const scale = pageWidth / canvas.width;
+        const srcPageHeight = Math.max(1, Math.floor(pageHeight / scale));
+        let y = 0;
+        let pageIndex = 0;
+        while (y < canvas.height) {
+          const sliceHeight = Math.min(srcPageHeight, canvas.height - y);
+          const pageCanvas = document.createElement('canvas');
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = sliceHeight;
+          const ctx = pageCanvas.getContext('2d');
+          ctx.drawImage(canvas, 0, y, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
+          const imgData = pageCanvas.toDataURL('image/png');
+          if (pageIndex > 0) pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, sliceHeight * scale, undefined, 'FAST');
+          y += sliceHeight;
+          pageIndex += 1;
         }
-      });
-      target.style.maxHeight = prevMaxHeight;
-      return pdf.output('blob');
+        return pdf.output('blob');
+      }
     }
     function setupActions(){
       const sharePdfBtn = document.getElementById('sharePdfBtn');
       const finishSessionBtn = document.getElementById('finishSessionBtn');
 
       async function shareAsPdf(){
+        if (sharePdfBtn) {
+          sharePdfBtn.disabled = true;
+          sharePdfBtn.textContent = '⏳ Preparing PDF...';
+        }
         try {
           const blob = await createSummaryPdfBlob();
           const safeName = String(state.session.sessionName || 'session-summary').replace(/[^\w\-]+/g, '-').slice(0, 48) || 'session-summary';
@@ -2787,6 +2879,11 @@ label,
           console.error('shareAsPdf failed:', err);
           alert('Automatic PDF sharing failed. Opening Print/Save as PDF as fallback.');
           window.print();
+        } finally {
+          if (sharePdfBtn) {
+            sharePdfBtn.disabled = false;
+            sharePdfBtn.textContent = '📄 Share as PDF';
+          }
         }
       }
       sharePdfBtn?.addEventListener('click', shareAsPdf);
@@ -2807,6 +2904,7 @@ label,
       setupCollapsibleSubsections();
       setupInfoButtons();
       bindBasicInputs();
+      bindConsentFields();
       setupPainSliders();
       setupChipGroups();
       buildActivities();
@@ -2822,7 +2920,7 @@ label,
         showChapter(startChapterFromUrl);
       }
       if (autoShareFromUrl === 'pdf') {
-        setTimeout(() => { document.getElementById('sharePdfBtn')?.click(); }, 420);
+        setTimeout(() => { document.getElementById('sharePdfBtn')?.click(); }, 1100);
       }
 
       // Live update summary title when editing name while on chapter 8
