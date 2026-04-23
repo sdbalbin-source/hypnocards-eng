@@ -285,19 +285,17 @@
             <h2 class="screen-title">אודות Pleasure Practice Studio</h2>
           </div>
           <div class="panel">
-            <p><strong>למה הסטודיו קיים</strong><br>מרחב שקט לחקירה אירוטית מודעת: לגלות מה רצוי לך, למצוא לזה שפה, ולבנות חוויות שנשענות על הסכמה, בטיחות ונוכחות.</p>
+            <p><strong>למה הסטודיו קיים</strong><br>מרחב שקט לחקירה אירוטית מודעת - לגלות מה רצוי לך, למצוא לזה שפה, ולבנות חוויות שנשענות על הסכמה, בטיחות ונוכחות.</p>
             <p><strong>שלושה כלים - סטודיו אחד</strong></p>
             <ul class="list">
               <li><strong>דפוסי שפה היפנוטיים</strong> - חבילת תרגול לשפה, קצב וטון.</li>
               <li><strong>ארכיטיפים של עונג</strong> - חקירה רגשית-סמלית דרך דימויים וקלפים.</li>
               <li><strong>מצפן התשוקות</strong> - שיח מובנה להסכמות, גבולות, עצימות ואפטרקר.</li>
             </ul>
-            <p><strong>על סשה</strong><br>סשה בלבין הוא מחנך לאמנויות אירוטיות ויוצר הסטודיו. העבודה שלו משלבת עומק, תשוקה והסכמה דרך כלים מעשיים לשימוש אישי או זוגי.</p>
-            <p><strong>פרטיות</strong><br>הנתונים נשמרים מקומית בדפדפן/מכשיר שלך כברירת מחדל. אם משתמשים במכשיר משותף - מומלץ למחוק מידע מקומי אחרי שימוש.</p>
+            <p><strong>על סשה</strong><br>סשה בלבין הוא מחנך לאמנויות אירוטיות ויוצר הסטודיו. העבודה שלו משלבת עומק, תשוקה והסכמה דרך כלים מעשיים לשימוש אישי או זוגי - כדי להפוך שיח אינטימי למדויק, בטוח ובר־יישום.</p>
+            <p><strong>פרטיות</strong><br>הנתונים נשמרים מקומית בדפדפן/מכשיר שלך כברירת מחדל. אם משתמשים במכשיר משותף - מומלץ למחוק נתונים לאחר שימוש.</p>
             <div class="utility-row" style="justify-content:flex-start; margin:0.8rem 0 0;">
-              <button class="secondary-btn" onclick="clearHebrewLocalData()">ניקוי מידע מקומי</button>
-              <button class="secondary-btn" onclick="clearPlannerLocalData()">ניקוי נתוני מצפן</button>
-              <button class="secondary-btn" onclick="clearHypnoLocalData()">ניקוי נתוני היפנו</button>
+              <button class="secondary-btn" onclick="refreshStudio()">רענון כללי</button>
             </div>
             <p class="muted">השפה העיצובית נשמרת זהה לגרסה האנגלית: רקע ספירלי, זכוכית רכה, טיפוגרפיה אלגנטית ומבנה מודולרי.</p>
           </div>
@@ -609,7 +607,8 @@
       }, 180);
     }
     function renderPlannerEmbed(sessionId, startChapter, autoShare, returnTo) {
-      const plannerSrc = `./מצפן התשוקות/index.html${sessionId || startChapter || autoShare ? '?' : ''}${sessionId ? `sessionId=${encodeURIComponent(sessionId)}` : ''}${startChapter ? `${sessionId ? '&' : ''}startChapter=${encodeURIComponent(startChapter)}` : ''}${autoShare ? `${sessionId || startChapter ? '&' : ''}autoShare=${encodeURIComponent(autoShare)}` : ''}`;
+      const plannerBase = './%D7%9E%D7%A6%D7%A4%D7%9F%20%D7%94%D7%AA%D7%A9%D7%95%D7%A7%D7%95%D7%AA/index.html';
+      const plannerSrc = `${plannerBase}${sessionId || startChapter || autoShare ? '?' : ''}${sessionId ? `sessionId=${encodeURIComponent(sessionId)}` : ''}${startChapter ? `${sessionId ? '&' : ''}startChapter=${encodeURIComponent(startChapter)}` : ''}${autoShare ? `${sessionId || startChapter ? '&' : ''}autoShare=${encodeURIComponent(autoShare)}` : ''}`;
       document.getElementById('app').innerHTML = `
         <div class="screen">
           <div class="back-row">
@@ -754,6 +753,11 @@
       const keys = ['he_favorites_v4', 'he_recordings_v4'];
       keys.forEach(k => localStorage.removeItem(k));
       alert('נתוני דפוסי השפה נוקו.');
+    }
+    function refreshStudio() {
+      diagnosticsCache = null;
+      const next = `${window.location.pathname}?refresh=${Date.now()}`;
+      window.location.replace(next);
     }
 
     function wireEmbedFrame(frameId, src) {
