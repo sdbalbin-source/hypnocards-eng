@@ -176,6 +176,34 @@
     .list { margin: 0.2rem 0 0; padding-right: 1rem; }
     .list li { margin-bottom: 0.3rem; }
     .muted { color: var(--muted); }
+    .diag-grid {
+      display: grid;
+      gap: 0.55rem;
+      margin-top: 0.6rem;
+    }
+    .diag-row {
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 0.7rem;
+      background: rgba(255,255,255,0.04);
+      padding: 0.55rem 0.65rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.7rem;
+    }
+    .diag-name { font-size: 0.93rem; }
+    .diag-path { font-size: 0.8rem; color: var(--muted); direction: ltr; text-align: left; }
+    .diag-chip {
+      border: 1px solid rgba(255,255,255,0.24);
+      border-radius: 999px;
+      padding: 0.14rem 0.52rem;
+      font-size: 0.78rem;
+      white-space: nowrap;
+    }
+    .diag-chip.ok { border-color: rgba(46,204,113,0.5); color: #bff6d7; background: rgba(46,204,113,0.16); }
+    .diag-chip.bad { border-color: rgba(255,99,132,0.48); color: #ffd4de; background: rgba(255,99,132,0.14); }
+    .diag-chip.warn { border-color: rgba(255,205,86,0.5); color: #ffeab8; background: rgba(255,205,86,0.14); }
+    .net-badge { margin-right: 0.35rem; }
   </style>
 </head>
 <body>
@@ -218,6 +246,7 @@
               <div class="card-note">טופס הסכמות, סיכום ושיתוף</div>
             </button>
             <button class="secondary-btn" onclick="openAbout()">אודות הסטודיו</button>
+            <button class="secondary-btn" onclick="openDiagnostics()">מצב מערכת</button>
             <div id="updateBannerHost"></div>
             <div class="utility-row">
               <button class="secondary-btn" id="installAppBtn" onclick="installHebrewApp()" hidden>התקן אפליקציה</button>
@@ -262,7 +291,17 @@
         </div>
       `
     };
+    const MODULE_HEALTH_CHECKS = [
+      { id: 'shell', name: 'מעטפת עברית', path: './index.html' },
+      { id: 'manifest', name: 'Manifest', path: './manifest.json' },
+      { id: 'sw', name: 'Service Worker', path: './sw.js' },
+      { id: 'archetypes', name: 'מודול ארכיטיפים', path: './archetypes-he/index.html' },
+      { id: 'archetypesData', name: 'דאטה ארכיטיפים', path: './archetypes_he_data.json' },
+      { id: 'hypno', name: 'מודול דפוסי שפה', path: './דפוסי שפה עברית/index.html' },
+      { id: 'planner', name: 'מודול מצפן תשוקות', path: './מצפן התשוקות/index.html' }
+    ];
     let deferredInstallPrompt = null;
+    let diagnosticsCache = null;
 
     function renderHome() {
       document.getElementById('app').innerHTML = screens.home;
@@ -274,6 +313,25 @@
     }
     function openArchetypes() {
       document.getElementById('app').innerHTML = screens.archetypes;
+    }
+    async function openDiagnostics() {
+      document.getElementById('app').innerHTML = `
+        <div class="screen">
+          <div class="back-row">
+            <button class="back-btn" onclick="renderHome()">←</button>
+            <h2 class="screen-title">מצב מערכת</h2>
+          </div>
+          <div class="panel">
+            <p>בדיקות זמינות מודולים וקבצי תשתית בריצה מקומית.</p>
+            <div class="utility-row" style="justify-content:flex-start;">
+              <button class="secondary-btn" onclick="runDiagnostics(true)">Recheck App State</button>
+            </div>
+            <div id="diagSummary" class="muted" style="margin-top:0.6rem;">טוען בדיקות...</div>
+            <div id="diagGrid" class="diag-grid"></div>
+          </div>
+        </div>
+      `;
+      await runDiagnostics(false);
     }
     function renderEmbeddedModule(title, src, iframeTitle, extraAttrs = '') {
       const frameId = `frame-${Math.random().toString(36).slice(2, 8)}`;
@@ -418,7 +476,8 @@
       let settled = false;
       const timeout = setTimeout(() => {
         if (settled) return;
-        status.innerHTML = `המודול נטען יותר מהרגיל.<br>אם המסך נשאר ריק, חזרו למסך הבית ונסו שוב.<br><small>${src}</small>`;
+        const offlineHint = navigator.onLine ? '' : '<br><strong>נראה שהמכשיר אופליין כרגע.</strong>';
+        status.innerHTML = `המודול נטען יותר מהרגיל.<br>אם המסך נשאר ריק, חזרו למסך הבית ונסו שוב.${offlineHint}<br><small>${src}</small>`;
       }, 5000);
       frame.addEventListener('load', () => {
         settled = true;
@@ -428,9 +487,65 @@
       frame.addEventListener('error', () => {
         settled = true;
         clearTimeout(timeout);
-        status.innerHTML = `לא ניתן לטעון את המודול כרגע.<br><small>${src}</small>`;
+        const offlineHint = navigator.onLine ? 'ייתכן שקובץ חסר או נתיב שגוי.' : 'נראה שהמכשיר ללא חיבור.';
+        status.innerHTML = `לא ניתן לטעון את המודול כרגע.<br>${offlineHint}<br><small>${src}</small>`;
       });
     }
+
+    async function runDiagnostics(forceRefresh) {
+      if (diagnosticsCache && !forceRefresh) {
+        renderDiagnosticsResult(diagnosticsCache);
+        return;
+      }
+      const checks = await Promise.all(MODULE_HEALTH_CHECKS.map(async item => {
+        try {
+          const res = await fetch(item.path, { cache: 'no-store' });
+          return { ...item, ok: res.ok, status: res.status, note: res.ok ? 'זמין' : `HTTP ${res.status}` };
+        } catch {
+          return { ...item, ok: false, status: 0, note: 'לא נגיש (network/error)' };
+        }
+      }));
+      diagnosticsCache = {
+        checks,
+        online: navigator.onLine,
+        checkedAt: new Date().toLocaleTimeString('he-IL')
+      };
+      renderDiagnosticsResult(diagnosticsCache);
+    }
+
+    function renderDiagnosticsResult(payload) {
+      const grid = document.getElementById('diagGrid');
+      const summary = document.getElementById('diagSummary');
+      if (!grid || !summary || !payload) return;
+      const okCount = payload.checks.filter(c => c.ok).length;
+      const total = payload.checks.length;
+      const netClass = payload.online ? 'ok' : 'warn';
+      const netLabel = payload.online ? 'אונליין' : 'אופליין';
+      summary.innerHTML = `<span class="diag-chip net-badge ${netClass}">${netLabel}</span>בדיקות: ${okCount}/${total} • עודכן: ${payload.checkedAt}`;
+      grid.innerHTML = payload.checks.map(row => {
+        const chipClass = row.ok ? 'ok' : 'bad';
+        const chipText = row.ok ? 'זמין' : 'לא זמין';
+        return `
+          <div class="diag-row">
+            <div>
+              <div class="diag-name">${row.name}</div>
+              <div class="diag-path">${row.path}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.45rem;">
+              <small class="muted">${row.note}</small>
+              <span class="diag-chip ${chipClass}">${chipText}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.addEventListener('online', () => {
+      diagnosticsCache = null;
+    });
+    window.addEventListener('offline', () => {
+      diagnosticsCache = null;
+    });
 
     renderHome();
   </script>
