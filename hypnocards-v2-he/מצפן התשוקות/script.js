@@ -1,0 +1,860 @@
+/* ========== STATE ========== */
+const state = {
+  session: { nickname:"", role:null, duration:90, pronouns:[] },
+  safety: {
+    trafficLight:false, safeword:"", gesture:"",
+    nuditySelf:[], nudityPartner:[],
+    painDesired:0, painTolerable:0,
+    marksPolicy:[], photoPolicy:[],
+    hardLimits:"", healthPhysical:"", healthMental:""
+  },
+  refinements:{}, // per group
+  text:{ sensitivityAreas:"", forbiddenSub:"", forbiddenDom:"" },
+  sets:{
+    roleplayScenes:[], domLanguage:[], nicknamesSub:[],
+    subLanguage:[], titlesDom:[],
+    aftercareNeeds:[], aftercareDuration:[], postSession:[]
+  },
+  activities:{}
+};
+const STORAGE_KEY = 'planner_sessions_v1';
+const urlParams = new URLSearchParams(window.location.search);
+const sessionIdFromUrl = urlParams.get('sessionId') || '';
+const startChapterFromUrl = urlParams.get('startChapter') || '';
+const autoShareFromUrl = urlParams.get('autoShare') || '';
+let activeSessionId = sessionIdFromUrl || `planner-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+/* ========== HELPERS ========== */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const clamp = (n,min,max)=> Math.max(min, Math.min(max,n));
+
+function perspectiveText(){
+  if (state.session.role === 'dom') return '• לתת';
+  if (state.session.role === 'sub') return '• לקבל';
+  return '';
+}
+function updatePerspectiveBadges(){
+  $$('.section-title .perspective').forEach(el => el.textContent = perspectiveText());
+}
+
+/* ========== NAVIGATION ========== */
+function showChapter(id){
+  $$('.chapter').forEach(sec => sec.classList.remove('visible'));
+  const el = document.getElementById(id);
+  if (el){ el.classList.add('visible'); window.scrollTo({top:0, behavior:'smooth'}); }
+  $$('.step-btn').forEach(b => b.classList.toggle('active', b.dataset.target===id));
+  if (id==='chapter-8') renderSummary();
+}
+function setupStepper(){
+  $$('.step-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const target = btn.dataset.target;
+      showChapter(target);
+      setTimeout(()=>{ const el = document.getElementById(target); el && el.focus(); }, 250);
+    });
+  });
+}
+function setupPrevNext(){
+  $$('.chapter').forEach((sec, idx, arr)=>{
+    const prevBtn = sec.querySelector('[data-prev]');
+    const nextBtn = sec.querySelector('[data-next]');
+    if (prevBtn) prevBtn.addEventListener('click', ()=> showChapter(arr[clamp(idx-1,0,arr.length-1)].id));
+    if (nextBtn) nextBtn.addEventListener('click', ()=> showChapter(arr[clamp(idx+1,0,arr.length-1)].id));
+  });
+}
+
+function listSessions(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+function saveSessions(rows){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(rows));
+}
+function loadSessionById(id){
+  if (!id) return null;
+  return listSessions().find(s => s && s.id === id) || null;
+}
+function mergeStateFromSaved(saved){
+  if (!saved || typeof saved !== 'object') return;
+  if (saved.session && typeof saved.session === 'object') Object.assign(state.session, saved.session);
+  if (saved.safety && typeof saved.safety === 'object') Object.assign(state.safety, saved.safety);
+  if (saved.refinements && typeof saved.refinements === 'object') Object.assign(state.refinements, saved.refinements);
+  if (saved.text && typeof saved.text === 'object') Object.assign(state.text, saved.text);
+  if (saved.sets && typeof saved.sets === 'object') Object.assign(state.sets, saved.sets);
+  if (saved.activities && typeof saved.activities === 'object') state.activities = saved.activities;
+}
+function applyStateToUi(){
+  $('#nickname').value = state.session.nickname || '';
+  $('#duration').value = Number.isFinite(state.session.duration) ? state.session.duration : 90;
+  $('#trafficLightChk').checked = !!state.safety.trafficLight;
+  $('#safeword').value = state.safety.safeword || '';
+  $('#safegesture').value = state.safety.gesture || '';
+  $('#hardLimits').value = state.safety.hardLimits || '';
+  $('#healthPhysical').value = state.safety.healthPhysical || '';
+  $('#healthMental').value = state.safety.healthMental || '';
+  $('#sensitivityAreas').value = state.text.sensitivityAreas || '';
+  $('#forbiddenSub').value = state.text.forbiddenSub || '';
+  $('#forbiddenDom').value = state.text.forbiddenDom || '';
+  ['painDesired','painTolerable'].forEach(id=>{
+    const input = document.getElementById(id);
+    const out = document.querySelector(`.intensity-value[data-for="${id}"]`);
+    const val = id === 'painDesired' ? state.safety.painDesired : state.safety.painTolerable;
+    if (input) input.value = String(Number.isFinite(val) ? val : 0);
+    if (out) out.textContent = `${Number.isFinite(val) ? val : 0}/10`;
+  });
+  updatePerspectiveBadges();
+}
+function saveActiveSession(){
+  const sessions = listSessions();
+  const ix = sessions.findIndex(s => s && s.id === activeSessionId);
+  const now = new Date().toISOString();
+  const payload = {
+    id: activeSessionId,
+    nickname: (state.session.nickname || '').trim(),
+    createdAt: ix >= 0 ? sessions[ix].createdAt : now,
+    updatedAt: now,
+    plannerState: {
+      session: state.session,
+      safety: state.safety,
+      refinements: state.refinements,
+      text: state.text,
+      sets: state.sets,
+      activities: state.activities
+    }
+  };
+  if (ix >= 0) sessions[ix] = payload; else sessions.push(payload);
+  saveSessions(sessions);
+}
+
+/* ========== INFO TEXTS (EXACT CONTENT) ========== */
+const infoTexts = {
+  trafficLight: 'שיטת תקשורת פשוטה ויעילה לשימוש תוך כדי סשן. ירוק (Green) מאשר שהכל בסדר, צהוב (Yellow) מסמן צורך בהאטה או בדיקה, ואדום (Red) הוא עצירה מוחלטת.',
+  safeword: 'מילה מוסכמת מראש שעוצרת את הסצנה באופן מיידי, ללא שאלות. היא חיונית כדי להבדיל בין התנגדות שהיא חלק מהמשחק לבין רצון אמיתי לעצור.',
+  gesture: 'סימן פיזי מוסכם שמשמש כמילת ביטחון כשאי אפשר לדבר (למשל, עם גאג). חשוב לבחור מחווה ברורה כמו שלוש טפיחות מכוונות.',
+  pain: 'סף רצוי הוא רמת הכאב המהנה. סף נסבל הוא הגבול העליון המוחלט של כאב. הגדרת שניהם מסייעת לנווט את הסשן בצורה בטוחה.',
+  hardLimits: '"לא" מוחלט ובלתי ניתן למשא ומתן. אלו פעולות, מילים או סיטואציות שאינך מוכן/ה להשתתף בהן בשום תנאי.',
+  health: 'שיתוף מידע רפואי (אסתמה, אלרגיות, פציעות) ונפשי (טריגרים, טראומות) הוא קריטי לבטיחות וניהול סשן רגיש ואחראי.',
+  impact: 'כל משחק הכולל הכאה או הצלפה מבוקרת על הגוף ליצירת תחושה פיזית ופסיכולוגית.',
+  paddle: 'כלי שטוח ורחב היוצר תחושת "חבטה" (Thud) שטחית.',
+  caning: 'מקל דק וגמיש היוצר כאב חד, צורב וממוקד. זוהי פרקטיקה מתקדמת הדורשת דיוק רב.',
+  spreader: 'מוט קשיח המגביל תנועה על ידי החזקת הגפיים במצב פשוק, ומגביר תחושת פגיעות וחשיפה.',
+  ballgag: 'אביזר ריסון המונע דיבור. בטיחות קריטית: יש לוודא נשימה פתוחה מהאף ומחווה פיזית לעצירה.',
+  pinwheel: 'גלגל עם מחטים קטנות היוצר תחושה "חשמלית" ודוקרנית על העור, אך אינו מיועד לחדור אותו.',
+  eStim: 'שימוש במכשירי גירוי חשמלי ייעודיים. פרקטיקה בסיכון גבוה: יש להשתמש רק בציוד תקני ולעולם לא מעל קו המותניים.',
+  needles: 'פרקטיקה מתקדמת של החדרת מחטים סטריליות לשכבת העור העליונה. דורשת ידע והקפדה מוחלטת על היגיינה.',
+  breath: 'פרקטיקה בסיכון גבוה ביותר העלולה לגרום לנזק מוחי או מוות. דורשת ניסיון רב, אמון מוחלט ופרוטוקול בטיחות صارם.',
+  choking: 'פרקטיקה בסיכון גבוה הכוללת לחץ על הצוואר ואינה מומלצת למתחילים כלל.',
+  cnc: 'משחק תפקידים מתקדם בו "לא" הוא חלק מהסצנה, אך מילת הביטחון האמיתית תמיד עוצרת הכל. דורש אמון ותיאום ציפיות מוחלט.',
+  cuck: 'פנטזיה או פרקטיקה של עוררות מינית מצפייה בפרטנר/ית עם אדם אחר, לרוב בהקשר של השפלה.',
+  discipline: 'מערכת כללים מוסכמת שהפרתם מובילה ל"ענישה". המטרה היא לרוב אימון וחיזוק הדינמיקה.',
+  punishment: 'התוצאה של הפרת כלל. יכולה להיות "כיפית" (Funishment) או ענישה אמיתית, לפי מה שסוכם מראש.',
+  groupScenes: 'סצנה המערבת יותר משני אנשים. דורשת רמה גבוהה של תקשורת ותיאום הסכמות מול כל המעורבים.',
+  aftercare: 'תהליך התמיכה הפיזית והרגשית לאחר סיום הסשן. חלק חיוני ובלתי נפרד ממשחק אחראי.',
+  postSession: 'תיאום ציפיות לגבי התקשורת לאחר סיום המפגש, למניעת אי-הבנות וניהול רגשי בריא.',
+  summary: 'ריכוז כל ההסכמות מהטופס. מומלץ לעבור עליו יחד כצ\'ק-אין אחרון לפני תחילת הסשן.'
+};
+
+function setupInfoButtons(){
+  // Fill texts for allowed anchors only
+  $('#trafficLightInfo').textContent = infoTexts.trafficLight;
+  $('#safewordInfo').textContent     = infoTexts.safeword;
+  $('#gestureInfo').textContent      = infoTexts.gesture;
+  $('#painInfo').textContent         = infoTexts.pain;
+  $('#hardLimitsInfo').textContent   = infoTexts.hardLimits;
+  $('#healthInfo').textContent       = infoTexts.health;
+
+  $('#impactInfo').textContent       = infoTexts.impact;
+  $('#groupScenesInfo').textContent  = infoTexts.groupScenes;
+
+  $('#aftercareInfoTop').textContent = infoTexts.aftercare;
+  $('#aftercareInfo').textContent    = infoTexts.postSession;
+
+  $('#summaryInfo').textContent      = infoTexts.summary;
+
+  $$('.info-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.infoTarget;
+      const panel = document.getElementById(id);
+      if (panel){ panel.hidden = !panel.hidden; }
+    });
+  });
+}
+
+/* ========== BASIC INPUTS & SLIDERS ========== */
+function bindBasicInputs(){
+  $('#nickname').addEventListener('input', e => state.session.nickname = e.target.value.trim());
+  $('#duration').addEventListener('input', e => state.session.duration = parseInt(e.target.value||'0',10));
+
+  $('#trafficLightChk').addEventListener('change', e => state.safety.trafficLight = e.target.checked);
+  $('#safeword').addEventListener('input', e => state.safety.safeword = e.target.value.trim());
+  $('#safegesture').addEventListener('input', e => state.safety.gesture = e.target.value.trim());
+  $('#hardLimits').addEventListener('input', e => state.safety.hardLimits = e.target.value);
+  $('#healthPhysical').addEventListener('input', e => state.safety.healthPhysical = e.target.value);
+  $('#healthMental').addEventListener('input', e => state.safety.healthMental = e.target.value);
+
+  $('#sensitivityAreas').addEventListener('input', e => state.text.sensitivityAreas = e.target.value);
+  $('#forbiddenSub').addEventListener('input', e => state.text.forbiddenSub = e.target.value);
+  $('#forbiddenDom').addEventListener('input', e => state.text.forbiddenDom = e.target.value);
+}
+
+function setupPainSliders(){
+  ['painDesired','painTolerable'].forEach(id=>{
+    const input = document.getElementById(id);
+    const out = document.querySelector(`.intensity-value[data-for="${id}"]`);
+    const update = ()=>{
+      const val = parseInt(input.value,10);
+      out.textContent = `${val}/10`;
+      state.safety[id==='painDesired'?'painDesired':'painTolerable'] = val;
+    };
+    input.addEventListener('input', update); update();
+  });
+}
+
+/* ========== CHIPS (incl. Other -> active) ========== */
+function setupChipGroups(){
+  $$('.chip-group').forEach(group=>{
+    const field = group.dataset.field;
+    const single = group.dataset.single === 'true';
+
+    function deselectAll(){ group.querySelectorAll('.chip.active').forEach(c=> c.classList.remove('active')); }
+
+    function writeSelection(){
+      const selected = Array.from(group.querySelectorAll('.chip.active'))
+        .map(c=> c.dataset.value)
+        .filter(v=> v !== '__other__');
+      if (field === 'role'){
+        state.session.role = selected[0] || null;
+        updatePerspectiveBadges();
+        return;
+      }
+      if (Array.isArray(state.session[field]))      state.session[field] = selected;
+      else if (Array.isArray(state.safety[field]))  state.safety[field]  = selected;
+      else if (Array.isArray(state.sets[field]))    state.sets[field]    = selected;
+      else                                          state[field]         = selected;
+    }
+
+    function handleChip(btn){
+      const value = btn.dataset.value;
+      if (value === '__other__'){
+        const input = document.createElement('input');
+        input.type='text'; input.className='text-input'; input.placeholder='הוספת ערך חדש… Enter לאישור';
+        input.style.maxWidth='280px';
+        btn.insertAdjacentElement('afterend', input);
+        input.focus();
+        const commit = ()=>{
+          const v = input.value.trim(); input.remove();
+          if (!v) return;
+          const chip = document.createElement('button');
+          chip.type='button'; chip.className='chip'; chip.dataset.value=v; chip.textContent=v;
+          btn.insertAdjacentElement('beforebegin', chip);
+          // activate immediately
+          if (single){ deselectAll(); chip.classList.add('active'); }
+          else { chip.classList.add('active'); }
+          writeSelection();
+        };
+        input.addEventListener('keydown', e=>{ if (e.key==='Enter'){ e.preventDefault(); commit(); } });
+        input.addEventListener('blur', commit);
+        return;
+      }
+
+      if (single){
+        if (btn.classList.contains('active')) btn.classList.remove('active');
+        else { deselectAll(); btn.classList.add('active'); }
+      } else {
+        btn.classList.toggle('active');
+      }
+      writeSelection();
+    }
+
+    group.addEventListener('click', e=>{
+      const btn = e.target.closest('.chip'); if (!btn) return;
+      handleChip(btn);
+    });
+  });
+}
+
+/* ========== ACTIVITIES (only ℹ️ where allowed) ========== */
+const activityDefs = {
+  gentle: [
+    {id:'face', he:'פנים', en:'Face'},
+    {id:'hair', he:'שיער', en:'Hair'},
+    {id:'neck', he:'צוואר', en:'Neck'},
+    {id:'shoulders', he:'כתפיים', en:'Shoulders'},
+    {id:'back', he:'גב', en:'Back'},
+    {id:'chest', he:'חזה/שדיים ופטמות', en:'Chest/Breasts & nipples'},
+    {id:'buttocks', he:'ישבן', en:'Buttocks'},
+    {id:'clitpen', he:'דגדגן/פין', en:'Clitoris/Penis'},
+    {id:'vagtest', he:'נרתיק/אשכים', en:'Vagina/Testicles'},
+    {id:'anus', he:'פי הטבעת', en:'Anus'},
+    {id:'other', he:'אחר', en:'Other', other:true}
+  ],
+  rough: [
+    {id:'face', he:'פנים', en:'Face'},
+    {id:'hair', he:'שיער', en:'Hair'},
+    {id:'neck', he:'צוואר', en:'Neck'},
+    {id:'shoulders', he:'כתפיים', en:'Shoulders'},
+    {id:'back', he:'גב', en:'Back'},
+    {id:'chest', he:'חזה/שדיים ופטמות', en:'Chest/Breasts & nipples'},
+    {id:'buttocks', he:'ישבן', en:'Buttocks'},
+    {id:'clitpen', he:'דגדגן/פין', en:'Clitoris/Penis'},
+    {id:'vagtest', he:'נרתיק/אשכים', en:'Vagina/Testicles'},
+    {id:'anus', he:'פי הטבעת', en:'Anus'},
+    {id:'other', he:'אחר', en:'Other', other:true}
+  ],
+  kisses: [
+    {id:'neck', he:'צוואר', en:'Neck'},
+    {id:'shoulders', he:'כתפיים', en:'Shoulders'},
+    {id:'chest', he:'חזה/שדיים ופטמות', en:'Chest/Breasts & nipples'},
+    {id:'buttocks', he:'ישבן', en:'Buttocks'},
+    {id:'belly', he:'בטן', en:'Belly'},
+    {id:'limbs', he:'גפיים', en:'Limbs'},
+    {id:'kissMouth', he:'נשיקות על הפה', en:'Kissing on mouth'},
+    {id:'frenchKiss', he:'נשיקות עם לשון', en:'French kiss'},
+    {id:'other', he:'אחר', en:'Other', other:true}
+  ],
+  impact: [
+    // ℹ️ לקבוצה עצמה (Impact), לא לפריטים כמו Spanking/Flogger
+    {id:'spanking', he:'ספנקינג', en:'Spanking'},
+    {id:'paddle', he:'פאדל', en:'Paddle', info: infoTexts.paddle},
+    {id:'flogger', he:'שוט רך/פלאוגר', en:'Flogger'},
+    {id:'caning', he:'קיינינג', en:'Caning', info: infoTexts.caning},
+    {id:'slapChest', he:'סטירה לחזה/שדיים', en:'Slap chest/breasts'},
+    {id:'slapFace', he:'סטירה לפנים', en:'Face slap'},
+    {id:'slapGenitals', he:'סטירה לפות/לפין', en:'Slap vulva/penis'},
+    {id:'other', he:'אחר', en:'Other', other:true}
+  ],
+  restraints: [
+    {id:'rope', he:'חבלים', en:'Rope'},
+    {id:'cuffs', he:'אזיקים', en:'Cuffs'},
+    {id:'spreader', he:'מוט פישוק', en:'Spreader bar', info: infoTexts.spreader},
+    {id:'ballgag', he:'גאג כדורי', en:'Ball gag', info: infoTexts.ballgag},
+    {id:'blindfold', he:'כיסוי עיניים', en:'Blindfold'},
+    {id:'other', he:'אחר', en:'Other', other:true}
+  ],
+  sensory: [
+    {id:'fur', he:'פרווה', en:'Fur'},
+    {id:'pinwheel', he:'גלגל מחטים (פינוויל)', en:'Wartenberg wheel', info: infoTexts.pinwheel},
+    {id:'knife', he:'סכין (ללא חיתוך)', en:'Knife (no cutting)'},
+    {id:'nipClamps', he:'מצבטי פטמות', en:'Nipple clamps'},
+    {id:'wax', he:'שעווה', en:'Wax'},
+    {id:'ice', he:'קרח', en:'Ice'},
+    {id:'electric', he:'חשמל', en:'Electricity (E-Stim)', info: infoTexts.eStim},
+    {id:'needles', he:'מחטים', en:'Needles', info: infoTexts.needles},
+    {id:'scratches', he:'שריטות', en:'Scratches'},
+    {id:'other', he:'אחר', en:'Other', other:true}
+  ],
+  somatic: [
+    {id:'breath', he:'עצירת נשימה', en:'Breath play', info: infoTexts.breath},
+    {id:'choking', he:'חנק', en:'Choking', info: infoTexts.choking},
+    {id:'gagging', he:'גאגינג', en:'Gagging'},
+    {id:'spitBody', he:'יריקה על הגוף', en:'Spitting (body)'},
+    {id:'spitFace', he:'יריקה על הפנים', en:'Spitting (face)'},
+    {id:'golden', he:'גולדאן שאוור (מתן/קבלת שתן)', en:'Golden shower (giving/receiving)'},
+    {id:'other', he:'אחר', en:'Other', other:true}
+  ],
+  objectification: [
+    {id:'pose', he:'לשהות בתנוחה להנאה ויזואלית', en:'Hold a pose'},
+    {id:'beObject', he:'להפוך לרהיט/חפץ', en:'Become furniture/object'},
+    {id:'publicExposure', he:'חשיפה ציבורית', en:'Public exposure'},
+    {id:'sexualObj', he:'אובייקטיפיקציה מינית', en:'Sexual objectification'},
+    {id:'other', he:'אחר', en:'Other', other:true}
+  ],
+  esteem: [
+    {id:'diminish', he:'הקטנה', en:'Diminishment'},
+    {id:'humiliation', he:'השפלה', en:'Humiliation'},
+    {id:'verbalHum', he:'השפלה מילולית', en:'Verbal humiliation'},
+    {id:'empower', he:'העצמה', en:'Empowerment'},
+    {id:'worship', he:'סגידה והערצה', en:'Worship'},
+    {id:'other', he:'אחר', en:'Other', other:true}
+  ],
+  psych: [
+    {id:'ddlg', he:'DDLG/הורה-ילד', en:'Caregiver/Little'},
+    {id:'cnc', he:'CNC (משחק חציית הסכמה בהסכמה)', en:'Consensual Non-Consent', info: infoTexts.cnc},
+    {id:'fear', he:'איום ופחד', en:'Fear play'},
+    {id:'cuck', he:'קוקולדינג', en:'Cuckolding', info: infoTexts.cuck},
+    {id:'exclusion', he:'הדרה/נידוי', en:'Exclusion'},
+    {id:'discipline', he:'משמעת', en:'Discipline', info: infoTexts.discipline},
+    {id:'punishment', he:'ענישה', en:'Punishment', info: infoTexts.punishment},
+    {id:'finExp', he:'ניצול כלכלי', en:'Financial exploitation'},
+    {id:'sexExp', he:'ניצול מיני', en:'Sexual exploitation'},
+    {id:'physExp', he:'ניצול פיזי', en:'Physical exploitation'},
+    {id:'other', he:'אחר', en:'Other', other:true}
+  ],
+  groupScenes: [
+    {id:'visible', he:'להיות בחשיפה לאחרים', en:'Visible to others'}, // הוסר ℹ️ מרמת פריט
+    {id:'nonSexPublic', he:'אינטראקציה לא מינית לעיני אחרים', en:'Non-sexual interaction in public'},
+    {id:'sexPublic', he:'אינטראקציה מינית לעיני אחרים', en:'Sexual interaction in public'},
+    {id:'othersTouch', he:'לאפשר מגע של אחרים', en:'Allow others to touch me'},
+    {id:'othersSex', he:'לאפשר לאחרים אינטראקציה מינית איתי', en:'Allow others sexual interaction with me'},
+    {id:'other', he:'אחר', en:'Other', other:true}
+  ],
+  intimacy: [
+    {id:'emotional', he:'חיבור אינטימי ורגשי'},
+    {id:'sensual', he:'חיבור חושני'},
+    {id:'sexual', he:'חיבור מיני'},
+    {id:'distant', he:'חיבור מרוחק ומכני'},
+    {id:'personal', he:'חיבור אישי'},
+    {id:'warm', he:'חיבור חם'},
+    {id:'cold', he:'חיבור קר'},
+    {id:'transpersonal', he:'חיבור טראנס-פרסונלי וארכיטיפי'},
+    {id:'other', he:'אחר', other:true}
+  ],
+  penetration: [
+    {id:'nonSexTouch', he:'מגע שאינו מיני', en:'Non-sexual touch'},
+    {id:'manualGen', he:'גירוי ידני של איברי המין', en:'Manual genital stimulation'},
+    {id:'toyStim', he:'גירוי עם צעצוע/כלי של איברי המין', en:'Toy/device stimulation'},
+    {id:'vagFingers', he:'חדירה וגינלית עם אצבעות', en:'Vaginal fingering'},
+    {id:'analFingers', he:'חדירה אנאלית עם אצבעות', en:'Anal fingering'},
+    {id:'vagToy', he:'חדירה וגינלית עם ויברטור/צעצוע', en:'Vaginal toy/dildo'},
+    {id:'analToy', he:'חדירה אנאלית בבאט-פלאג/דילדו', en:'Anal plug/dildo'},
+    {id:'vagInter', he:'חדירה וגינלית עם זין', en:'Vaginal intercourse'},
+    {id:'analInter', he:'חדירה אנאלית עם זין', en:'Anal intercourse'},
+    {id:'oral', he:'מין אוראלי (ליקוק פות/מציצת פין)', en:'Oral sex'},
+    {id:'faceF', he:'Face-f*cking', en:'Face-f*cking'},
+    {id:'other', he:'אחר', en:'Other', other:true}
+  ],
+  erotic: [
+    {id:'orgControl', he:'שליטה באורגזמה', en:'Orgasm control'},
+    {id:'orgDenial', he:'מניעת אורגזמה', en:'Orgasm denial'},
+    {id:'forcedOrg', he:'אילוץ אורגזמה', en:'Forced orgasm'},
+    {id:'sexualObj', he:'החפצה מינית', en:'Sexual objectification'},
+    {id:'publicSex', he:'חשיפה ציבורית', en:'Public sexual exposure'},
+    {id:'ravishing', he:'“להיטרף” מינית', en:'Consensual Ravishing'},
+    {id:'beingUsed', he:'להיות משומש מינית', en:'Being sexually used'},
+    {id:'other', he:'אחר', en:'Other', other:true}
+  ]
+};
+
+function buildActivities(){
+  Object.entries(activityDefs).forEach(([groupKey, items])=>{
+    state.activities[groupKey] = {};
+    const container = document.querySelector(`.activity-list[data-rows="${groupKey}"]`);
+    if (!container) return;
+
+    items.forEach(item=>{
+      if (item.other){
+        // "Other" inline creator
+        const row = document.createElement('div');
+        row.className = 'activity-row';
+        const label = document.createElement('div');
+        label.className = 'activity-label';
+        label.innerHTML = `<span class="lang-he"><strong>אחר</strong></span><span class="lang-en">Other</span>`;
+        const controls = document.createElement('div');
+        controls.className = 'controls-wrap';
+        const otherInput = document.createElement('input');
+        otherInput.className = 'text-input';
+        otherInput.placeholder = 'הוספת סעיף חדש… Enter לאישור';
+        otherInput.style.maxWidth = '320px';
+        controls.appendChild(otherInput);
+        row.append(label, controls);
+        container.appendChild(row);
+
+        const commit = ()=>{
+          const v = otherInput.value.trim(); if (!v) return;
+          otherInput.value = '';
+          addDynamicActivityRow(container, groupKey, v);
+        };
+        otherInput.addEventListener('keydown', e=>{ if (e.key==='Enter'){ e.preventDefault(); commit(); } });
+        otherInput.addEventListener('blur', commit);
+        return;
+      }
+
+      const row = createActivityRow(groupKey, item);
+      container.appendChild(row);
+      state.activities[groupKey][item.id] = { status:null, intensity:0, name:item.he };
+    });
+  });
+}
+
+function addDynamicActivityRow(container, groupKey, labelText){
+  const id = `dyn_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,6)}`;
+  const item = { id, he: labelText, en:'' };
+  const row = createActivityRow(groupKey, item);
+  container.insertBefore(row, container.lastElementChild);
+  state.activities[groupKey][id] = { status:null, intensity:0, name:labelText };
+}
+
+function createActivityRow(groupKey, item){
+  const row = document.createElement('div');
+  row.className = 'activity-row';
+
+  const label = document.createElement('div');
+  label.className = 'activity-label';
+  label.innerHTML = `<span class="lang-he"><strong>${item.he}</strong></span>` + (item.en?`<span class="lang-en">${item.en}</span>`:'');
+  if (item.info){
+    const infoBtn = document.createElement('button');
+    infoBtn.className='info-btn'; infoBtn.type='button'; infoBtn.textContent='ℹ️';
+    const info = document.createElement('div'); info.className='info-text'; info.hidden=true; info.textContent=item.info;
+    infoBtn.addEventListener('click', ()=> info.hidden=!info.hidden);
+    label.append(infoBtn, info);
+  }
+
+  const controls = document.createElement('div');
+  controls.className = 'controls-wrap';
+
+  const choice = document.createElement('div');
+  choice.className = 'choice-group';
+  const bYes = document.createElement('button'); bYes.type='button'; bYes.className='choice-btn yes'; bYes.textContent='כן';
+  const bMaybe = document.createElement('button'); bMaybe.type='button'; bMaybe.className='choice-btn maybe'; bMaybe.textContent='אולי';
+  const bNo = document.createElement('button'); bNo.type='button'; bNo.className='choice-btn no'; bNo.textContent='לא';
+  choice.append(bYes,bMaybe,bNo);
+
+  const sliderWrap = document.createElement('div');
+  sliderWrap.className = 'slider-container disabled';
+  const slider = document.createElement('input');
+  slider.type='range'; slider.min='0'; slider.max='10'; slider.value='0'; slider.className='intensity-slider';
+  const sval = document.createElement('span'); sval.className='intensity-value'; sval.textContent='0/10';
+  sliderWrap.append(slider,sval);
+
+  controls.append(choice, sliderWrap);
+
+  function setActive(btn){
+    [bYes,bMaybe,bNo].forEach(b=> b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  function setStatus(stat){
+    const entry = state.activities[groupKey][item.id] || (state.activities[groupKey][item.id]={status:null,intensity:0,name:item.he});
+    entry.status = stat;
+  }
+  bYes.addEventListener('click', ()=>{ setActive(bYes); setStatus('yes'); sliderWrap.classList.remove('disabled'); });
+  bMaybe.addEventListener('click', ()=>{ setActive(bMaybe); setStatus('maybe'); sliderWrap.classList.remove('disabled'); });
+  bNo.addEventListener('click', ()=>{ setActive(bNo); setStatus('no'); sliderWrap.classList.add('disabled'); slider.value='0'; sval.textContent='0/10'; (state.activities[groupKey][item.id]||{}).intensity=0; });
+
+  slider.addEventListener('input', ()=>{
+    sval.textContent = `${slider.value}/10`;
+    const entry = state.activities[groupKey][item.id] || (state.activities[groupKey][item.id]={status:null,intensity:0,name:item.he});
+    if (!entry.status || entry.status === 'no') {
+      setActive(bYes);
+      setStatus('yes');
+      sliderWrap.classList.remove('disabled');
+    }
+    entry.intensity = parseInt(slider.value,10);
+  });
+
+  row.append(label, controls);
+  return row;
+}
+
+/* Refinements */
+function setupRefinements(){
+  $$('textarea[data-refine]').forEach(t=>{
+    t.addEventListener('input',()=> state.refinements[t.dataset.refine] = t.value );
+  });
+}
+
+/* ========== SUMMARY (now shows YES/MAYBE/NO) ========== */
+let sortMode = 'alpha';
+function renderSummary(){
+  // Top session box
+  $('#sumNickname').textContent     = state.session.nickname || '—';
+  $('#sumRole').textContent         = state.session.role ? ({dom:'דום',sub:'סאב','switch':'סוויץ׳'}[state.session.role]) : '—';
+  $('#sumDuration').textContent     = state.session.duration ? `${state.session.duration} דק׳` : '—';
+  $('#sumPronouns').textContent     = (state.session.pronouns||[]).join(' • ') || '—';
+  $('#sumHardLimits').textContent   = state.safety.hardLimits || '—';
+  $('#sumHealthPhysical').textContent = state.safety.healthPhysical || '—';
+  $('#sumHealthMental').textContent   = state.safety.healthMental || '—';
+  $('#sumPainDesired').textContent  = `${state.safety.painDesired}/10`;
+  $('#sumPainTolerable').textContent= `${state.safety.painTolerable}/10`;
+  const safetyBits=[];
+  if (state.safety.trafficLight) safetyBits.push('רמזור');
+  if (state.safety.safeword)     safetyBits.push(`מילת ביטחון: ${state.safety.safeword}`);
+  if (state.safety.gesture)      safetyBits.push(`מחווה: ${state.safety.gesture}`);
+  $('#sumSafetyComms').textContent = safetyBits.join(' • ') || '—';
+
+  const filter = document.querySelector('.chip-group[data-field="summaryFilter"] .chip.active')?.dataset.value || 'all';
+  const root = $('#summaryContent');
+  root.innerHTML = '';
+
+  const chapters = [
+    { title:'🤲 סוגי מגע', groups:[
+      { key:'gentle',  title:'🫳🏼 מגע עדין' },
+      { key:'rough',   title:'💪🏼 מגע אינטנסיבי' },
+      { key:'kisses',  title:'👄 נשיקות/ליקוקים/נשיכות' },
+      { key:'impact',  title:'🏓 אימפקט' }
+    ], extras:[
+      {label:'🎯 אזורים עם רגישות ספציפית', text: state.text.sensitivityAreas }
+    ]},
+    { title:'⛓️ ריתוק/קשירות/תחושות', groups:[
+      { key:'restraints', title:'🪢 קשירות וריתוק' },
+      { key:'sensory',    title:'🔥🧊 משחקי תחושות' },
+      { key:'somatic',    title:'⚠️ קצוות סומטיים' }
+    ]},
+    { title:'🎭 דינמיקות ושפה', groups:[
+      { key:'objectification', title:'🧸 החפצה' },
+      { key:'esteem',          title:'🤯 ערך וזהות' },
+      { key:'psych',           title:'🧠 משחק פסיכולוגי' },
+      { key:'groupScenes',     title:'👥 ריבוי משתתפים' }
+    ], chips:[
+      {label:'🎬 משחקי תפקידים וסצנות', items: state.sets.roleplayScenes, refine: state.refinements.roleplay},
+      {label:'🗣️ סגנון שפה של הדום',   items: state.sets.domLanguage},
+      {label:'🏷️ כינויים רצויים לסאב',  items: state.sets.nicknamesSub, extra: (state.text.forbiddenSub? `להימנע: ${state.text.forbiddenSub}`:'')},
+      {label:'🗣️ סגנון שפה של הסאב',   items: state.sets.subLanguage},
+      {label:'🏷️ כינויים רצויים לדום', items: state.sets.titlesDom, extra: (state.text.forbiddenDom? `להימנע: ${state.text.forbiddenDom}`:'')}
+    ]},
+    { title:'❤️ מיניות ואינטימיות', groups:[
+      { key:'intimacy',    title:'🤍 אינטימיות וחיבור רצוי' },
+      { key:'penetration', title:'🍑 חדירות וגירוי מיני' },
+      { key:'erotic',      title:'🔥 דינמיקה מינית/ארוטית' }
+    ]},
+    { title:'🫶 אפטר־קר', groups:[], chips:[
+      {label:'🧴 צרכים מיידיים', items: state.sets.aftercareNeeds, refine: state.refinements.aftercare},
+      {label:'⏳ משך אפטר־קר',  items: state.sets.aftercareDuration},
+      {label:'📬 ציפיות אחרי המפגש', items: state.sets.postSession}
+    ]}
+  ];
+
+  function sortRows(rows){
+    const sorter = sortMode==='power'
+      ? (a,b)=> (b.intensity||0)-(a.intensity||0) || a.name.localeCompare(b.name,'he')
+      : (a,b)=> a.name.localeCompare(b.name,'he');
+    return rows.sort(sorter);
+  }
+
+  // collect with status grouping (yes -> maybe -> no)
+  function collect(groupKey){
+    const group = state.activities[groupKey] || {};
+    let rows = Object.values(group).map(e=> ({name:e.name, status:e.status, intensity:e.intensity||0}))
+                 .filter(r => r.status); // include yes/maybe/no, exclude null
+    if (filter==='yes') rows = rows.filter(r => r.status==='yes');
+    if (filter==='maybe') rows = rows.filter(r => r.status==='maybe');
+
+    if (filter==='all'){
+      const ys = sortRows(rows.filter(r=>r.status==='yes'));
+      const ms = sortRows(rows.filter(r=>r.status==='maybe'));
+      const ns = sortRows(rows.filter(r=>r.status==='no'));
+      return [...ys, ...ms, ...ns];
+    }
+    return sortRows(rows);
+  }
+
+  chapters.forEach(ch=>{
+    const card = document.createElement('div');
+    card.className = 'summary-card';
+    const h = document.createElement('h4'); h.textContent = ch.title; card.appendChild(h);
+
+    (ch.groups||[]).forEach(g=>{
+      const data = collect(g.key);
+      const hasRef = state.refinements[g.key] && state.refinements[g.key].trim();
+      if (!data.length && !hasRef) return;
+
+      const sub = document.createElement('div');
+      const st = document.createElement('div'); st.className = 'summary-subtitle'; st.textContent = g.title;
+      sub.appendChild(st);
+
+      if (data.length){
+        const list = document.createElement('div'); list.className='summary-tags';
+        data.forEach(it=>{
+          const tag = document.createElement('div');
+          tag.className = `summary-tag summary-tag-${it.status}`;
+          tag.textContent = it.intensity>0 ? `${it.name} (${it.intensity}/10)` : it.name;
+          list.appendChild(tag);
+        });
+        sub.appendChild(list);
+      }
+      if (hasRef){
+        const ref = document.createElement('div'); ref.className='summary-tags';
+        const tag = document.createElement('div'); tag.className='summary-tag';
+        tag.textContent = `דיוקים – ${titleForGroup(g.key)}: ${state.refinements[g.key].trim()}`;
+        ref.appendChild(tag);
+        sub.appendChild(ref);
+      }
+      card.appendChild(sub);
+    });
+
+    (ch.chips||[]).forEach(block=>{
+      if ((block.items && block.items.length) || block.refine || block.extra){
+        const sub = document.createElement('div');
+        const st = document.createElement('div'); st.className='summary-subtitle'; st.textContent=block.label;
+        sub.appendChild(st);
+
+        if (block.items && block.items.length){
+          const list = document.createElement('div'); list.className='summary-tags';
+          block.items.forEach(v=>{
+            const t = document.createElement('div'); t.className='summary-tag'; t.textContent=v; list.appendChild(t);
+          });
+          sub.appendChild(list);
+        }
+        if (block.refine && block.refine.trim()){
+          const list = document.createElement('div'); list.className='summary-tags';
+          const t = document.createElement('div'); t.className='summary-tag'; t.textContent=`דיוקים – ${block.label.replace(/^[^ ]+ /,'')}: ${block.refine.trim()}`;
+          list.appendChild(t); sub.appendChild(list);
+        }
+        if (block.extra){
+          const ex = document.createElement('div'); ex.className='summary-tags';
+          const t = document.createElement('div'); t.className='summary-tag'; t.textContent=block.extra;
+          ex.appendChild(t); sub.appendChild(ex);
+        }
+        card.appendChild(sub);
+      }
+    });
+
+    if (card.childNodes.length>1) root.appendChild(card);
+  });
+
+  $('#consentName').value = state.session.nickname || '';
+  $('#consentDate').value = currentDateDDMMYYYY();
+}
+
+function titleForGroup(k){
+  const map = {
+    gentle:'מגע עדין', rough:'מגע אינטנסיבי', kisses:'נשיקות/ליקוקים/נשיכות', impact:'אימפקט',
+    restraints:'קשירות וריתוק', sensory:'משחקי תחושות', somatic:'קצוות סומטיים',
+    objectification:'החפצה', esteem:'ערך וזהות', psych:'משחק פסיכולוגי', groupScenes:'ריבוי משתתפים',
+    intimacy:'אינטימיות', penetration:'חדירות וגירוי מיני', erotic:'דינמיקה מינית/ארוטית',
+    roleplay:'משחקי תפקידים', aftercare:'אחרי סשן'
+  };
+  return map[k] || k;
+}
+
+function setupSummaryControls(){
+  const group = document.querySelector('.chip-group[data-field="summaryFilter"]');
+  group.addEventListener('click', e=>{
+    const chip = e.target.closest('.chip'); if (!chip) return;
+    group.querySelectorAll('.chip').forEach(c=> c.classList.remove('active'));
+    chip.classList.add('active');
+    renderSummary();
+  });
+  const sortBtn = $('#sortToggle');
+  sortBtn.addEventListener('click', ()=>{
+    sortMode = (sortMode==='alpha') ? 'power' : 'alpha';
+    sortBtn.textContent = sortMode==='alpha' ? 'מיין לפי עוצמה' : 'מיין לפי א-ת';
+    renderSummary();
+  });
+}
+
+/* ========== SIGNATURE PAD (exact code provided) ========== */
+// --- Signature Pad Logic ---
+function initializeSignaturePad() {
+  const canvas = document.getElementById('signatureCanvas'); 
+  if (!canvas) return; // Don't run if canvas doesn't exist
+  const clearButton = document.getElementById('clearSignatureBtn');
+  const ctx = canvas.getContext('2d');
+  let isDrawing = false;
+
+  function resizeCanvas() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    ctx.strokeStyle = 'var(--primary)';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+  }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  function startDrawing(event) {
+    isDrawing = true;
+    draw(event);
+  }
+  function stopDrawing() {
+    isDrawing = false;
+    ctx.beginPath();
+  }
+  function draw(event) {
+    if (!isDrawing) return;
+    event.preventDefault();
+    let x, y;
+    if (event.type.startsWith('touch')) {
+      const touch = event.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      x = touch.clientX - rect.left;
+      y = touch.clientY - rect.top;
+    } else {
+      x = event.offsetX;
+      y = event.offsetY;
+    }
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  }
+  canvas.addEventListener('mousedown', startDrawing);
+  canvas.addEventListener('mouseup', stopDrawing);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseleave', stopDrawing);
+  canvas.addEventListener('touchstart', startDrawing, { passive: false });
+  canvas.addEventListener('touchend', stopDrawing);
+  canvas.addEventListener('touchmove', draw, { passive: false });
+  clearButton.addEventListener('click', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  });
+}
+// Call the function to set up the signature pad
+// initializeSignaturePad(); -> נקרא מתוך init()
+
+/* ========== TOP ACTIONS ========== */
+function setupTopActions(){
+  const shareLinkBtn = $('#shareLinkBtn');
+  if (shareLinkBtn) shareLinkBtn.addEventListener('click', async ()=>{
+    const url = location.href;
+    try{
+      if (navigator.share){ await navigator.share({title:document.title, url}); }
+      else { await navigator.clipboard.writeText(url); alert('קישור הועתק!'); }
+    }catch(e){}
+  });
+  $('#copyLink').addEventListener('click', async ()=>{ saveActiveSession(); await navigator.clipboard.writeText(location.href); alert('קישור הועתק!'); });
+  $('#shareWhatsApp').addEventListener('click', ()=>{
+    saveActiveSession();
+    const url = encodeURIComponent(location.href);
+    window.open(`https://wa.me/?text=${url}`, '_blank');
+  });
+  $('#printPdf').addEventListener('click', ()=> { saveActiveSession(); window.print(); });
+  $('#saveSession').addEventListener('click', ()=> {
+    saveActiveSession();
+    window.parent?.postMessage?.({ type: 'planner_session_finished' }, window.location.origin);
+    alert('ה-Session נשמר.');
+  });
+}
+
+/* ========== INIT ========== */
+function currentDateDDMMYYYY(){
+  const d = new Date();
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+function init(){
+  setupStepper();
+  setupPrevNext();
+  setupInfoButtons();
+  bindBasicInputs();
+  setupPainSliders();
+  setupChipGroups();
+  buildActivities();
+  if (sessionIdFromUrl) {
+    const saved = loadSessionById(sessionIdFromUrl);
+    if (saved && saved.plannerState) {
+      activeSessionId = saved.id;
+      mergeStateFromSaved(saved.plannerState);
+    }
+  }
+  applyStateToUi();
+  setupRefinements();
+  setupSummaryControls();
+  setupTopActions();
+  updatePerspectiveBadges();
+  initializeSignaturePad();
+
+  document.querySelector('.step-btn[data-target="chapter-1"]').classList.add('active');
+  $('#nickname').addEventListener('input', ()=>{ if ($('#chapter-8').classList.contains('visible')) renderSummary(); });
+  if (startChapterFromUrl) showChapter(startChapterFromUrl);
+  if (autoShareFromUrl === 'pdf') {
+    setTimeout(() => {
+      showChapter('chapter-8');
+      setTimeout(() => {
+        const btn = document.getElementById('printPdf');
+        if (btn) btn.click();
+      }, 350);
+    }, 200);
+  }
+  window.addEventListener('beforeunload', saveActiveSession);
+}
+document.addEventListener('DOMContentLoaded', init);
