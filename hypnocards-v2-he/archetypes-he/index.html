@@ -169,6 +169,25 @@
     .spread-card.chosen { z-index: 20 !important; transform: translate(-50%, -50%) scale(1.25) rotate(0deg) !important; box-shadow: 0 20px 70px rgba(130,80,220,0.55); filter: brightness(1.16); }
     .spread-card.fade-out { opacity: 0; transform: translate(-50%, -50%) scale(0.92) !important; }
     .hint { position: absolute; bottom: 0.6rem; right: 0.9rem; color: var(--muted); font-size: 0.84rem; }
+    .toast {
+      position: fixed;
+      right: 1rem;
+      bottom: 1rem;
+      z-index: 80;
+      max-width: min(420px, calc(100% - 2rem));
+      border: 1px solid rgba(183,135,255,0.42);
+      border-radius: 0.7rem;
+      background: rgba(20,14,34,0.95);
+      color: #f1e9ff;
+      padding: 0.62rem 0.8rem;
+      font-size: 0.9rem;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.35);
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
     @media (max-width: 720px) { .spread-wrap { height: min(520px, 86vh); } .spread-card { width: clamp(104px, 24vw, 132px); } }
   </style>
 </head>
@@ -196,6 +215,7 @@
       <div class="hint">אפשר ללחוץ או למשוך קלף מהקשת</div>
     </div>
   </div>
+  <div class="toast" id="toast"></div>
 
   <script>
     const FAVORITES_KEY = 'archetype_he_favorites_v1';
@@ -216,6 +236,8 @@
     const TAP_DRIFT = 10;
     const spreadOverlay = document.getElementById('spreadOverlay');
     const spreadStage = document.getElementById('spreadStage');
+    const toastEl = document.getElementById('toast');
+    let toastTimer = null;
 
     function goBack() {
       if (window.parent && window.parent !== window) window.parent.postMessage({ type: 'he_module_back_home' }, '*');
@@ -489,7 +511,7 @@
           const fav = favorites.has(card.id) ? '★' : '☆';
           const currentClass = current && current.id === card.id ? 'is-current' : '';
           html += `
-            <div class="row ${currentClass}" data-open="${escapeHtml(card.id)}">
+            <div class="row ${currentClass}" data-open="${escapeHtml(card.id)}" role="button" tabindex="0" aria-label="פתח קלף ${escapeHtml(card.name)}">
               <span>${escapeHtml(card.name)}</span>
               <span>
                 <small>${escapeHtml(card.frequency || '')}</small>
@@ -529,6 +551,15 @@
           if (!card) return;
           current = card;
           setView('draw');
+        });
+        row.addEventListener('keydown', ev => {
+          if (ev.key === 'Enter' || ev.key === ' ') {
+            ev.preventDefault();
+            const card = CARDS.find(c => c.id === row.dataset.open);
+            if (!card) return;
+            current = card;
+            setView('draw');
+          }
         });
       });
       host.querySelectorAll('[data-fav]').forEach(btn => {
@@ -655,7 +686,7 @@
               <div class="about-body">פורמטים נתמכים אוטומטית: <strong>.webp</strong>, <strong>.png</strong>, <strong>.jpg</strong>, <strong>.jpeg</strong></div>
               <div class="filter-row">
                 <button class="btn" onclick="copyMissingImageList()">העתק רשימת קבצים חסרים</button>
-                <button class="btn" onclick="rescanAssets()">Re-scan assets</button>
+                <button class="btn" onclick="rescanAssets()">סריקה מחדש של נכסים</button>
                 <button class="btn" onclick="downloadMissingAssetsCsv()">הורד דוח פערים CSV</button>
               </div>
               <div class="mono-box" id="missingImageList">${escapeHtml(missingList || 'אין כרגע פריטים חסרים לפי המיפוי.')}</div>
@@ -672,9 +703,9 @@
         .join('\n');
       const payload = text || 'אין כרגע קבצים חסרים לפי המיפוי.';
       if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(payload).then(() => alert('רשימת הקבצים הועתקה.')).catch(() => alert(payload));
+        navigator.clipboard.writeText(payload).then(() => notify('רשימת הקבצים הועתקה.')).catch(() => notify(payload));
       } else {
-        alert(payload);
+        notify(payload);
       }
     }
 
@@ -683,7 +714,7 @@
       IMAGE_AVAILABLE = coverage.available;
       IMAGE_RESOLVED = coverage.resolved;
       if (currentView === 'about') setView('about');
-      else alert(`Re-scan completed: ${IMAGE_AVAILABLE.size} assets detected.`);
+      else notify(`הסריקה הושלמה: זוהו ${IMAGE_AVAILABLE.size} נכסים.`);
     }
 
     function downloadMissingAssetsCsv() {
@@ -705,6 +736,17 @@
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+      notify('דוח CSV ירד בהצלחה.');
+    }
+
+    function notify(message) {
+      if (!toastEl) return;
+      toastEl.textContent = String(message || '');
+      toastEl.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toastEl.classList.remove('show');
+      }, 2200);
     }
 
     function imageCandidates(src) {
