@@ -50,6 +50,16 @@
         linear-gradient(170deg, #1a1129, #0d0a13 70%);
       display: grid; place-items: center; text-align: center; padding: 1rem;
     }
+    .front-art {
+      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0;
+      opacity: 0.96;
+    }
+    .front-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(8,6,14,0.78), rgba(8,6,14,0.12) 55%, rgba(8,6,14,0.62));
+      z-index: 1;
+    }
+    .front-text { position: relative; z-index: 2; }
     .front h2 { margin: 0; font-size: 1.55rem; line-height: 1.25; font-weight: 700; }
     .front p { margin: 0.8rem 0 0; color: var(--muted); font-size: 0.95rem; }
     .back { transform: rotateY(180deg); background: linear-gradient(165deg, #0f0a16, #07050c 78%); display: flex; }
@@ -127,6 +137,7 @@
     const FAVORITES_KEY = 'archetype_he_favorites_v1';
     const DECK_KEY = 'archetype_he_deck_realms_v1';
     let CARDS = [];
+    let IMAGE_MAP = {};
     let current = null;
     let spreadCards = [];
     let dragState = null;
@@ -182,11 +193,15 @@
       current = card;
       const host = document.getElementById('cardHost');
       if (!host || !card) return;
+      const art = IMAGE_MAP[card.id] || '';
+      const artHtml = art ? `<img src="${escapeHtml(art)}" alt="${escapeHtml(card.name || '')}" class="front-art" onerror="this.remove()">` : '';
       host.innerHTML = `
         <div class="flip">
           <div class="flip-inner" id="flipInner">
             <article class="face front">
-              <div>
+              ${artHtml}
+              <div class="front-overlay"></div>
+              <div class="front-text">
                 <h2>${escapeHtml(card.name || 'ללא שם')}</h2>
                 <p>${escapeHtml(normalizeRealm(card.realm))} • ${escapeHtml(card.frequency || 'ללא תדר')}</p>
               </div>
@@ -479,6 +494,17 @@
         CARDS = Array.isArray(data.cards) ? data.cards : [];
       } catch {
         CARDS = [];
+      }
+      try {
+        const res = await fetch('./image-map.json', { cache: 'no-store' });
+        const data = await res.json();
+        const rows = Array.isArray(data.images) ? data.images : [];
+        IMAGE_MAP = rows.reduce((acc, row) => {
+          if (row && row.id && row.image) acc[row.id] = row.image;
+          return acc;
+        }, {});
+      } catch {
+        IMAGE_MAP = {};
       }
       current = CARDS[0] || null;
       setView('draw');
