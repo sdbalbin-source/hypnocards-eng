@@ -78,9 +78,19 @@
     }
     .row small { color: var(--muted); font-size: 0.76rem; }
     .row:hover { background: rgba(255,255,255,0.11); }
+    .row.is-current { border-color: rgba(183,135,255,0.65); background: rgba(183,135,255,0.14); }
     .star-btn { min-width: 2rem; padding: 0.25rem 0.4rem; }
     .filter-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
     .realm-option { display: flex; align-items: center; gap: 0.35rem; border: 1px solid var(--border); border-radius: 0.6rem; padding: 0.35rem 0.5rem; background: rgba(255,255,255,0.04); }
+    .search-input {
+      width: min(420px, 100%);
+      border: 1px solid var(--border);
+      border-radius: 0.65rem;
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      padding: 0.42rem 0.55rem;
+      font-size: 0.92rem;
+    }
     .about-stack { display: grid; gap: 0.65rem; }
     .about-note { color: var(--muted); margin: 0 0 0.35rem; }
     .about-acc {
@@ -198,6 +208,7 @@
     let spreadCards = [];
     let dragState = null;
     let currentView = 'draw';
+    let allCardsQuery = '';
     let selectedRealms = new Set();
     let favoritesOnly = false;
     let favorites = new Set();
@@ -306,12 +317,14 @@
       spreadCards = shuffleArray(deck).slice(0, Math.min(7, deck.length));
       renderSpread();
       spreadOverlay.classList.add('show');
+      document.body.style.overflow = 'hidden';
     }
 
     function closeSpread() {
       spreadOverlay.classList.remove('show');
       spreadStage.innerHTML = '';
       dragState = null;
+      document.body.style.overflow = '';
     }
 
     function renderSpread() {
@@ -424,13 +437,14 @@
       if (!panel) return;
       const deck = getDeckCards();
       if (!deck.length) {
-        panel.innerHTML = '<div class="meta">אין קלפים בדק הנוכחי. עדכן בחירה ב-Custom Deck.</div>';
+        panel.innerHTML = '<div class="meta">אין קלפים בדק הנוכחי. עדכן בחירה ב-Custom Deck.</div><button class="btn" onclick="setView(\'custom\')">פתח Custom Deck</button>';
         return;
       }
       let html = '';
       deck.slice(0, 18).forEach(card => {
+        const currentClass = current && current.id === card.id ? 'is-current' : '';
         const fav = favorites.has(card.id) ? '★' : '☆';
-        html += `<button class="row" data-id="${escapeHtml(card.id)}"><span>${escapeHtml(card.name)}</span><small>${fav}</small></button>`;
+        html += `<button class="row ${currentClass}" data-id="${escapeHtml(card.id)}"><span>${escapeHtml(card.name)}</span><small>${fav}</small></button>`;
       });
       panel.innerHTML = html;
       panel.querySelectorAll('.row').forEach(btn => {
@@ -442,20 +456,35 @@
     }
 
     function renderAllCardsView(host) {
+      const query = allCardsQuery.trim().toLowerCase();
       const groups = new Map();
       CARDS.forEach(card => {
+        if (query) {
+          const hay = `${card.name || ''} ${card.realm || ''} ${card.frequency || ''}`.toLowerCase();
+          if (!hay.includes(query)) return;
+        }
         const realm = normalizeRealm(card.realm);
         if (!groups.has(realm)) groups.set(realm, []);
         groups.get(realm).push(card);
       });
       const realms = Array.from(groups.keys()).sort((a, b) => a.localeCompare(b, 'he'));
-      let html = '<div class="panel">';
+      let html = `
+        <div class="panel">
+          <div class="filter-row">
+            <input class="search-input" id="allCardsSearch" placeholder="חיפוש שם / ממלכה / תדר" value="${escapeHtml(allCardsQuery)}">
+            <button class="btn" onclick="allCardsQuery=''; setView('all')">נקה</button>
+          </div>
+      `;
+      if (!realms.length) {
+        html += '<div class="meta">לא נמצאו תוצאות לחיפוש הנוכחי.</div>';
+      }
       realms.forEach(realm => {
         html += `<div class="group-title">${escapeHtml(realm)} (${groups.get(realm).length})</div>`;
         groups.get(realm).forEach(card => {
           const fav = favorites.has(card.id) ? '★' : '☆';
+          const currentClass = current && current.id === card.id ? 'is-current' : '';
           html += `
-            <div class="row" data-open="${escapeHtml(card.id)}">
+            <div class="row ${currentClass}" data-open="${escapeHtml(card.id)}">
               <span>${escapeHtml(card.name)}</span>
               <span>
                 <small>${escapeHtml(card.frequency || '')}</small>
@@ -467,6 +496,13 @@
       });
       html += '</div>';
       host.innerHTML = html;
+      const search = document.getElementById('allCardsSearch');
+      if (search) {
+        search.addEventListener('input', () => {
+          allCardsQuery = search.value;
+          setView('all');
+        });
+      }
       host.querySelectorAll('[data-open]').forEach(row => {
         let sx = 0;
         let sy = 0;
@@ -698,6 +734,16 @@
       }));
       return { available, resolved };
     }
+
+    window.addEventListener('keydown', ev => {
+      if (ev.key === 'Escape' && spreadOverlay.classList.contains('show')) {
+        closeSpread();
+      }
+    });
+
+    spreadOverlay.addEventListener('click', ev => {
+      if (ev.target === spreadOverlay) closeSpread();
+    });
 
     boot();
   </script>
