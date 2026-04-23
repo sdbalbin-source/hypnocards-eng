@@ -204,6 +204,19 @@
     .diag-chip.bad { border-color: rgba(255,99,132,0.48); color: #ffd4de; background: rgba(255,99,132,0.14); }
     .diag-chip.warn { border-color: rgba(255,205,86,0.5); color: #ffeab8; background: rgba(255,205,86,0.14); }
     .net-badge { margin-right: 0.35rem; }
+    .session-card {
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 0.85rem;
+      background: rgba(255,255,255,0.04);
+      padding: 0.65rem;
+      margin-bottom: 0.55rem;
+    }
+    .session-actions {
+      display: flex;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
   </style>
 </head>
 <body>
@@ -300,6 +313,7 @@
       { id: 'hypno', name: 'מודול דפוסי שפה', path: './דפוסי שפה עברית/index.html' },
       { id: 'planner', name: 'מודול מצפן תשוקות', path: './מצפן התשוקות/index.html' }
     ];
+    const PLANNER_SESSIONS_KEY = 'planner_sessions_v1';
     let deferredInstallPrompt = null;
     let diagnosticsCache = null;
 
@@ -353,7 +367,141 @@
       renderEmbeddedModule('דפוסי שפה היפנוטיים', './דפוסי שפה עברית/index.html', 'דפוסי שפה עברית');
     }
     function openPlanner() {
-      renderEmbeddedModule('מצפן התשוקות', './מצפן התשוקות/index.html', 'מצפן התשוקות', 'allow="web-share"');
+      renderPlannerHome();
+    }
+    function listPlannerSessions() {
+      try {
+        const raw = localStorage.getItem(PLANNER_SESSIONS_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(parsed)) return [];
+        return parsed
+          .filter(s => s && typeof s === 'object' && typeof s.id === 'string')
+          .sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
+      } catch {
+        return [];
+      }
+    }
+    function plannerSessionTitle(s) {
+      const nick = String((s && s.nickname) || '').trim();
+      return nick || 'Session ללא כותרת';
+    }
+    function plannerSessionDate(s) {
+      const raw = String((s && (s.updatedAt || s.createdAt)) || '');
+      if (!raw) return 'ללא תאריך';
+      const dt = new Date(raw);
+      if (Number.isNaN(dt.getTime())) return 'ללא תאריך';
+      return dt.toLocaleString('he-IL', { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    }
+    function renderPlannerHome() {
+      document.getElementById('app').innerHTML = `
+        <div class="screen">
+          <div class="back-row">
+            <button class="back-btn" onclick="renderHome()">←</button>
+            <h2 class="screen-title">מצפן התשוקות</h2>
+          </div>
+          <div class="panel">
+            <div class="utility-row" style="justify-content:flex-start; margin:0;">
+              <button class="secondary-btn" onclick="openPlannerNewSession()">New Consent & Desires Session</button>
+              <button class="secondary-btn" onclick="renderPlannerSessions()">My Sessions</button>
+              <button class="secondary-btn" onclick="renderPlannerAbout()">About Kinky Scene Planner</button>
+            </div>
+            <p class="muted" style="margin-top:0.8rem;">בחרי מסלול עבודה: התחלה חדשה, פתיחת סשן שמור, או סקירה עקרונית לפני התחלה.</p>
+          </div>
+        </div>
+      `;
+    }
+    function renderPlannerAbout() {
+      document.getElementById('app').innerHTML = `
+        <div class="screen">
+          <div class="back-row">
+            <button class="back-btn" onclick="renderPlannerHome()">←</button>
+            <h2 class="screen-title">About Kinky Scene Planner</h2>
+          </div>
+          <div class="panel">
+            <p>המודול נועד לשיח מובנה על הסכמה, גבולות, עצימות ו־aftercare לפני סשן.</p>
+            <ul class="list">
+              <li>מגדירים כוונה, העדפות וגבולות לכל מפגש מחדש.</li>
+              <li>מסכמים בפורמט קריא לשיתוף עם פרטנר/ית.</li>
+              <li>פועלים בגישת consent-first עם אפשרות עצירה בכל רגע.</li>
+            </ul>
+            <p class="muted">שמרו על מילת ביטחון, תקשורת רציפה ועיבוד קצר אחרי תרגול.</p>
+          </div>
+        </div>
+      `;
+    }
+    function openPlannerNewSession() {
+      const sid = `planner-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      renderPlannerEmbed(sid, null, null, 'home');
+    }
+    function renderPlannerSessions() {
+      const sessions = listPlannerSessions();
+      const emptyHtml = `
+        <div class="panel">
+          <p>טרם נמצאו Sessions שמורים.</p>
+          <div class="utility-row" style="justify-content:flex-start; margin:0.7rem 0 0;">
+            <button class="secondary-btn" onclick="openPlannerNewSession()">התחל Session חדש</button>
+            <button class="secondary-btn" onclick="renderPlannerHome()">חזרה</button>
+          </div>
+        </div>
+      `;
+      if (!sessions.length) {
+        document.getElementById('app').innerHTML = `
+          <div class="screen">
+            <div class="back-row">
+              <button class="back-btn" onclick="renderPlannerHome()">←</button>
+              <h2 class="screen-title">My Sessions</h2>
+            </div>
+            ${emptyHtml}
+          </div>
+        `;
+        return;
+      }
+      const cards = sessions.map(s => `
+        <div class="session-card">
+          <div><strong>${escapeHtml(plannerSessionTitle(s))}</strong></div>
+          <div class="muted" style="font-size:0.84rem; margin-top:0.25rem;">${escapeHtml(plannerSessionDate(s))}</div>
+          <div class="session-actions">
+            <button class="secondary-btn" onclick="openPlannerSummary('${escapeHtml(String(s.id))}')">Open</button>
+            <button class="secondary-btn" onclick="openPlannerSession('${escapeHtml(String(s.id))}')">Edit</button>
+            <button class="secondary-btn" onclick="sharePlannerSessionPdf('${escapeHtml(String(s.id))}')">Share PDF</button>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('app').innerHTML = `
+        <div class="screen">
+          <div class="back-row">
+            <button class="back-btn" onclick="renderPlannerHome()">←</button>
+            <h2 class="screen-title">My Sessions</h2>
+          </div>
+          <div class="panel">${cards}</div>
+        </div>
+      `;
+    }
+    function openPlannerSession(sessionId) {
+      renderPlannerEmbed(sessionId, null, null, 'sessions');
+    }
+    function openPlannerSummary(sessionId) {
+      renderPlannerEmbed(sessionId, 'chapter-8', null, 'sessions');
+    }
+    function sharePlannerSessionPdf(sessionId) {
+      renderPlannerEmbed(sessionId, 'chapter-8', 'pdf', 'sessions');
+    }
+    function renderPlannerEmbed(sessionId, startChapter, autoShare, returnTo) {
+      const plannerSrc = `./מצפן התשוקות/index.html${sessionId || startChapter || autoShare ? '?' : ''}${sessionId ? `sessionId=${encodeURIComponent(sessionId)}` : ''}${startChapter ? `${sessionId ? '&' : ''}startChapter=${encodeURIComponent(startChapter)}` : ''}${autoShare ? `${sessionId || startChapter ? '&' : ''}autoShare=${encodeURIComponent(autoShare)}` : ''}`;
+      const backAction = returnTo === 'sessions' ? 'renderPlannerSessions()' : 'renderPlannerHome()';
+      document.getElementById('app').innerHTML = `
+        <div class="screen">
+          <div class="back-row">
+            <button class="back-btn" onclick="${backAction}">←</button>
+            <h2 class="screen-title">מצפן התשוקות</h2>
+          </div>
+          <div class="frame-wrap">
+            <iframe id="plannerEmbed" src="${plannerSrc}" title="מצפן התשוקות" allow="web-share"></iframe>
+            <div id="plannerEmbed-status" class="embed-status">טוען מודול...</div>
+          </div>
+        </div>
+      `;
+      wireEmbedFrame('plannerEmbed', plannerSrc);
     }
 
     if ('serviceWorker' in navigator) {
@@ -538,6 +686,14 @@
           </div>
         `;
       }).join('');
+    }
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
 
     window.addEventListener('online', () => {
