@@ -2290,6 +2290,7 @@
 
         function renderKinkyScenePlannerHome() {
             const app = document.getElementById('app');
+            const savedSessionsCount = listPlannerSessions().length;
             app.innerHTML = `
                 <div class="flex flex-col h-full p-6 bg-black/10">
                     <div class="flex items-center justify-between mb-8 pt-4">
@@ -2307,6 +2308,7 @@
                         <button onclick="renderPlannerSessions()" class="glass-panel module-home-card p-6 rounded-3xl hover:border-purple-500/50 transition">
                             <h3 class="text-xl font-bold text-white serif-font mb-1">My Sessions</h3>
                             <p class="text-gray-400 serif-font text-base">View, continue, and manage previously saved planner sessions.</p>
+                            <p class="text-gray-400 text-xs text-center mt-2">${savedSessionsCount} saved sessions</p>
                         </button>
 
                         <button onclick="showPlannerAbout()" class="glass-panel module-home-card p-6 rounded-3xl hover:border-purple-500/50 transition">
@@ -2407,6 +2409,7 @@
         function renderPlannerSessions() {
             const app = document.getElementById('app');
             const sessions = listPlannerSessions();
+            const sessionsTitle = `My Sessions (${sessions.length})`;
             const rows = sessions.length
                 ? sessions.map(s => `
                     <div class="glass-panel p-4 rounded-2xl border border-white/15 space-y-3">
@@ -2432,7 +2435,7 @@
                 <div class="flex flex-col h-full bg-[#050408]">
                     <div class="p-6 pt-8 flex items-center gap-4">
                         <button onclick="renderKinkyScenePlannerHome()" class="p-2 bg-white/5 rounded-full"><i data-lucide="arrow-left"></i></button>
-                        <h2 class="text-2xl font-bold text-white serif-font">My Sessions</h2>
+                        <h2 class="text-2xl font-bold text-white serif-font">${sessionsTitle}</h2>
                     </div>
                     <div class="flex-1 overflow-y-auto px-6 pb-10 space-y-3 no-scrollbar">${rows}</div>
                 </div>

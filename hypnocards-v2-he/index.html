@@ -375,6 +375,16 @@
         const parsed = raw ? JSON.parse(raw) : [];
         if (!Array.isArray(parsed)) return [];
         return parsed
+          .map(s => {
+            if (!s || typeof s !== 'object') return s;
+            const session = (((s.plannerState || {}).session) || {});
+            return {
+              ...s,
+              sessionName: s.sessionName || session.sessionName || '',
+              role: s.role || session.role || null,
+              duration: Number.isFinite(Number(s.duration)) ? Number(s.duration) : Number(session.duration || 0) || null
+            };
+          })
           .filter(s => s && typeof s === 'object' && typeof s.id === 'string')
           .sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
       } catch {
@@ -382,8 +392,12 @@
       }
     }
     function plannerSessionTitle(s) {
+      const explicit = String((s && s.sessionName) || '').trim();
+      if (explicit) return explicit;
+      const nested = String((((s && s.plannerState) || {}).session || {}).sessionName || '').trim();
+      if (nested) return nested;
       const nick = String((s && s.nickname) || '').trim();
-      return nick || 'Session ללא כותרת';
+      return nick || 'סשן ללא כותרת';
     }
     function plannerSessionDate(s) {
       const raw = String((s && (s.updatedAt || s.createdAt)) || '');
@@ -392,7 +406,16 @@
       if (Number.isNaN(dt.getTime())) return 'ללא תאריך';
       return dt.toLocaleString('he-IL', { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' });
     }
+    function plannerSessionMeta(s) {
+      const roleRaw = String((s && s.role) || ((((s && s.plannerState) || {}).session || {}).role) || '').trim();
+      const durationRaw = Number((s && s.duration) || ((((s && s.plannerState) || {}).session || {}).duration) || 0);
+      const roleMap = { dom: 'דום', sub: 'סאב', switch: 'סוויץ׳' };
+      const role = roleMap[roleRaw] || 'לא הוגדר תפקיד';
+      const duration = Number.isFinite(durationRaw) && durationRaw > 0 ? `${durationRaw} דק׳` : 'משך לא הוגדר';
+      return `${role} • ${duration}`;
+    }
     function renderPlannerHome() {
+      const savedSessionsCount = listPlannerSessions().length;
       document.getElementById('app').innerHTML = `
         <div class="screen">
           <div class="back-row">
@@ -402,7 +425,7 @@
           <div class="panel">
             <div class="utility-row" style="justify-content:flex-start; margin:0;">
               <button class="secondary-btn" onclick="openPlannerNewSession()">New Consent & Desires Session</button>
-              <button class="secondary-btn" onclick="renderPlannerSessions()">My Sessions</button>
+              <button class="secondary-btn" onclick="renderPlannerSessions()">My Sessions (${savedSessionsCount})</button>
               <button class="secondary-btn" onclick="renderPlannerAbout()">About Kinky Scene Planner</button>
             </div>
             <p class="muted" style="margin-top:0.8rem;">בחרי מסלול עבודה: התחלה חדשה, פתיחת סשן שמור, או סקירה עקרונית לפני התחלה.</p>
@@ -435,6 +458,7 @@
     }
     function renderPlannerSessions() {
       const sessions = listPlannerSessions();
+      const sessionsTitle = `My Sessions (${sessions.length})`;
       const emptyHtml = `
         <div class="panel">
           <p>טרם נמצאו Sessions שמורים.</p>
@@ -449,7 +473,7 @@
           <div class="screen">
             <div class="back-row">
               <button class="back-btn" onclick="renderPlannerHome()">←</button>
-              <h2 class="screen-title">My Sessions</h2>
+              <h2 class="screen-title">${sessionsTitle}</h2>
             </div>
             ${emptyHtml}
           </div>
@@ -460,6 +484,7 @@
         <div class="session-card">
           <div><strong>${escapeHtml(plannerSessionTitle(s))}</strong></div>
           <div class="muted" style="font-size:0.84rem; margin-top:0.25rem;">${escapeHtml(plannerSessionDate(s))}</div>
+          <div class="muted" style="font-size:0.84rem; margin-top:0.2rem;">${escapeHtml(plannerSessionMeta(s))}</div>
           <div class="session-actions">
             <button class="secondary-btn" onclick="openPlannerSummary('${escapeHtml(String(s.id))}')">Open</button>
             <button class="secondary-btn" onclick="openPlannerSession('${escapeHtml(String(s.id))}')">Edit</button>
@@ -471,7 +496,7 @@
         <div class="screen">
           <div class="back-row">
             <button class="back-btn" onclick="renderPlannerHome()">←</button>
-            <h2 class="screen-title">My Sessions</h2>
+            <h2 class="screen-title">${sessionsTitle}</h2>
           </div>
           <div class="panel">${cards}</div>
         </div>
