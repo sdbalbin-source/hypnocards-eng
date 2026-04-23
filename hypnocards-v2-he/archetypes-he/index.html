@@ -167,6 +167,7 @@
     }
     .spread-card:hover { filter: brightness(1.1); box-shadow: 0 18px 50px rgba(0,0,0,0.5); }
     .spread-card.chosen { z-index: 20 !important; transform: translate(-50%, -50%) scale(1.25) rotate(0deg) !important; box-shadow: 0 20px 70px rgba(130,80,220,0.55); filter: brightness(1.16); }
+    .spread-card.fade-out { opacity: 0; transform: translate(-50%, -50%) scale(0.92) !important; }
     .hint { position: absolute; bottom: 0.6rem; right: 0.9rem; color: var(--muted); font-size: 0.84rem; }
     @media (max-width: 720px) { .spread-wrap { height: min(520px, 86vh); } .spread-card { width: clamp(104px, 24vw, 132px); } }
   </style>
@@ -179,10 +180,10 @@
       <button class="btn" onclick="setView('draw')">למסך שליפה</button>
     </div>
     <div class="menu">
-      <button class="btn active" id="nav-draw" onclick="setView('draw')">Shuffle & Draw</button>
-      <button class="btn" id="nav-custom" onclick="setView('custom')">Custom Deck</button>
-      <button class="btn" id="nav-all" onclick="setView('all')">All Cards</button>
-      <button class="btn" id="nav-about" onclick="setView('about')">About</button>
+      <button class="btn active" id="nav-draw" onclick="setView('draw')">ערבוב ושליפה</button>
+      <button class="btn" id="nav-custom" onclick="setView('custom')">דק מותאם</button>
+      <button class="btn" id="nav-all" onclick="setView('all')">כל הקלפים</button>
+      <button class="btn" id="nav-about" onclick="setView('about')">אודות ארכיטיפים</button>
     </div>
     <div class="view" id="view"></div>
   </div>
@@ -239,7 +240,7 @@
     function saveState() {
       localStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(favorites)));
       localStorage.setItem(DECK_KEY, JSON.stringify(Array.from(selectedRealms)));
-      localStorage.setItem(PREFS_KEY, JSON.stringify({ favoritesOnly, currentView }));
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ favoritesOnly, currentView, allCardsQuery }));
     }
 
     function getDeckCards() {
@@ -382,6 +383,9 @@
 
     function chooseSpreadCard(card, el) {
       const stageRect = spreadStage.getBoundingClientRect();
+      Array.from(spreadStage.querySelectorAll('.spread-card')).forEach(node => {
+        if (node !== el) node.classList.add('fade-out');
+      });
       el.classList.add('chosen');
       el.style.left = `${stageRect.width / 2}px`;
       el.style.top = `${stageRect.height / 2}px`;
@@ -424,6 +428,7 @@
               <button class="btn" onclick="toggleFlip()">היפוך</button>
             </div>
             <div class="meta">גודל דק פעיל: ${getDeckCards().length} קלפים</div>
+            <div class="meta">נכסים חזותיים שזוהו: ${IMAGE_AVAILABLE.size}/${Object.keys(IMAGE_MAP).length}</div>
             <div class="list" id="drawList"></div>
           </div>
         </div>
@@ -609,24 +614,36 @@
         .join('\n');
       host.innerHTML = `
         <div class="panel">
-          <h3>About Archetypes of Pleasure</h3>
-          <p class="about-note">קריאה מקדימה + סטטוס מודול עברי על אותה תשתית אנגלית.</p>
+          <h3>אודות ארכיטיפים של עונג</h3>
+          <p class="about-note">מדריך קריאה מעשי ומעמיק, במבנה אקורדיון תואם לגרסת האנגלית.</p>
           <div class="about-stack">
             <details class="about-acc" open>
               <summary>לפני שמתחילים</summary>
-              <div class="about-body">הקלפים כאן נועדו לחקירה רגשית-אנרגטית דרך דימויים ארכיטיפיים.\nאפשר לשלוף אקראית, לבנות דק מותאם לפי ממלכות, או לעבור על כל הקלפים ולסמן מועדפים.</div>
+              <div class="about-body">הקלפים הם הזמנה לתרגול חי: שליפה להפתעה, בניית דק לפי ממלכה, וסימון מועדפים פעילים.\nהמטרה היא לא "תשובה נכונה", אלא חקירה של מה מהדהד בך עכשיו - רגשית, גופנית ודמיונית.</div>
             </details>
             <details class="about-acc">
               <summary>אור וצל</summary>
-              <div class="about-body">כל ארכיטיפ מחזיק גם מתנה וגם צל.\nהמטרה אינה לשפוט או "לתקן", אלא לזהות, לתת מקום, ולבחור איך לעבוד עם האנרגיה הזו באופן מודע ובטוח.</div>
+              <div class="about-body">לכל ארכיטיפ יש מתנה וצל. עבודה ארכיטיפית אמיצה מזהה את שניהם.\nהדחפים שאנו מסתירים, המקומות שמביכים אותנו, והפנטזיות שלא תמיד "נוחות" - הם לרוב שער לעומק, לא תקלה.\nהעבודה כאן היא הכרה, אינטגרציה ובחירה מודעת.</div>
+            </details>
+            <details class="about-acc">
+              <summary>כוחו של דימוי</summary>
+              <div class="about-body">מגע הוא לא רק פעולה פיזית; הוא גם סיפור, הקשר ומשמעות.\nאותו מגע יכול להפוך לחוויה עוצמתית בהרבה כשמתלווה אליו דמות, תפקיד, כוונה ושפה.\nהדימוי מפעיל דמיון, זיכרון רגשי ותשוקה יצירתית.</div>
+            </details>
+            <details class="about-acc">
+              <summary>לא תחפושת - התגלמות</summary>
+              <div class="about-body">אימוץ פרסונה אירוטית אינו זיוף עצמי אלא דרך לגלם חלקים אותנטיים שלא קיבלו מקום ביומיום.\nמה שנראה "מנוגד" לזהות הרגילה שלך עשוי להיות דווקא השלמה עמוקה שלה.</div>
             </details>
             <details class="about-acc">
               <summary>איך להשתמש בקלפים</summary>
-              <div class="about-body">• לבד: לבחור קלף ולשאול מה הוא מעיר בך.\n• בזוג: לבחור קלף משותף ולתרגם אותו למשחק, שפה, וקצב.\n• כשיחה: להשתמש בקלף כדי לדבר על רצונות, גבולות ופנטזיות.</div>
+              <div class="about-body">• לבד: לבחור קלף ולשאול מה הוא מעיר בך.\n• בזוג: לבחור ארכיטיפ ולתרגם אותו לקצב, שפה וגבולות.\n• כשיחה: להשתמש בקלף כדי לדבר על רצונות, גבולות ופנטזיות בצורה נגישה.\n• לעבודה עמוקה: לכתוב/לדבר על לבוש, תנועה, רצון, מתנה, צל וארכיטיפ משלים.</div>
             </details>
             <details class="about-acc">
               <summary>בטיחות ומודעות</summary>
-              <div class="about-body">העבודה הארכיטיפית יכולה לפתוח תכנים עמוקים.\nתמיד בהסכמה, עם מילת ביטחון, ועם עיבוד קצר אחרי התרגול. סקרנות עדיפה על שיפוט.</div>
+              <div class="about-body">עבודה ארכיטיפית יכולה לפתוח תכנים רגישים וזיכרונות עמוקים.\nעקרונות בסיס: הסכמה מפורשת, מילת ביטחון, עצירה בכל רגע, ועיבוד קצר אחרי התרגול.\nסקרנות עדיפה על שיפוט; אין "ארכיטיפ נכון", יש חקירה קשובה.</div>
+            </details>
+            <details class="about-acc">
+              <summary>הזמנה לתרגול</summary>
+              <div class="about-body">הקלפים הם לא רק משחק מיני - הם הזמנה להיכרות מחודשת עם עצמך.\nלתת במה לחלקים מושתקים, להרחיב טווח ביטוי, וליצור מפגשים חיים ובטוחים יותר.</div>
             </details>
             <details class="about-acc">
               <summary>סטטוס נכסים חזותיים</summary>
@@ -639,6 +656,7 @@
               <div class="filter-row">
                 <button class="btn" onclick="copyMissingImageList()">העתק רשימת קבצים חסרים</button>
                 <button class="btn" onclick="rescanAssets()">Re-scan assets</button>
+                <button class="btn" onclick="downloadMissingAssetsCsv()">הורד דוח פערים CSV</button>
               </div>
               <div class="mono-box" id="missingImageList">${escapeHtml(missingList || 'אין כרגע פריטים חסרים לפי המיפוי.')}</div>
             </details>
@@ -668,6 +686,27 @@
       else alert(`Re-scan completed: ${IMAGE_AVAILABLE.size} assets detected.`);
     }
 
+    function downloadMissingAssetsCsv() {
+      const rows = [['id', 'name', 'expected_path', 'status']];
+      CARDS.forEach(card => {
+        const expected = IMAGE_MAP[card.id] || '';
+        const status = expected && IMAGE_AVAILABLE.has(card.id) ? 'present' : 'missing';
+        if (status === 'missing') {
+          rows.push([card.id || '', card.name || '', expected, status]);
+        }
+      });
+      const csv = rows.map(cols => cols.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'archetypes-he-missing-assets.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
     function imageCandidates(src) {
       const s = String(src || '').trim();
       if (!s) return [];
@@ -690,6 +729,7 @@
       selectedRealms = new Set(safeParse(DECK_KEY, []));
       const prefs = safeParse(PREFS_KEY, {});
       favoritesOnly = Boolean(prefs && prefs.favoritesOnly);
+      allCardsQuery = String((prefs && prefs.allCardsQuery) || '');
       try {
         const res = await fetch('../archetypes_he_data.json', { cache: 'no-store' });
         const data = await res.json();
