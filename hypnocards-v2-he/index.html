@@ -549,6 +549,10 @@
       if (!data || typeof data !== 'object') return;
       if (data.type === 'he_module_back_home') {
         renderHome();
+        return;
+      }
+      if (data.type === 'planner_session_finished') {
+        renderPlannerSessions();
       }
     });
 
