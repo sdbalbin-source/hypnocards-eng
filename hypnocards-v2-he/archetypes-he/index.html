@@ -81,6 +81,45 @@
     .star-btn { min-width: 2rem; padding: 0.25rem 0.4rem; }
     .filter-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
     .realm-option { display: flex; align-items: center; gap: 0.35rem; border: 1px solid var(--border); border-radius: 0.6rem; padding: 0.35rem 0.5rem; background: rgba(255,255,255,0.04); }
+    .about-stack { display: grid; gap: 0.65rem; }
+    .about-note { color: var(--muted); margin: 0 0 0.35rem; }
+    .about-acc {
+      border: 1px solid rgba(183,135,255,0.35);
+      border-radius: 0.85rem;
+      background: rgba(255,255,255,0.03);
+      overflow: hidden;
+    }
+    .about-acc > summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 0.65rem 0.8rem;
+      font-weight: 700;
+      color: #efdfff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+    }
+    .about-acc > summary::-webkit-details-marker { display: none; }
+    .about-acc > summary::before { content: '+'; color: #cfa8ff; font-size: 1.1rem; }
+    .about-acc[open] > summary::before { content: '−'; }
+    .about-body {
+      padding: 0 0.8rem 0.8rem;
+      color: #e8e5f0;
+      line-height: 1.65;
+      white-space: pre-wrap;
+    }
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid rgba(183,135,255,0.35);
+      border-radius: 999px;
+      padding: 0.2rem 0.6rem;
+      margin-left: 0.35rem;
+      background: rgba(183,135,255,0.12);
+      font-size: 0.82rem;
+      color: #eadbff;
+    }
     .spread-overlay {
       position: fixed; inset: 0; z-index: 30; background: rgba(4,3,8,0.82);
       display: none; align-items: center; justify-content: center; padding: 1rem;
@@ -475,12 +514,39 @@
     }
 
     function renderAboutView(host) {
+      const expected = Object.keys(IMAGE_MAP).length;
+      const available = CARDS.filter(card => IMAGE_MAP[card.id]).length;
+      const missing = Math.max(0, expected - available);
       host.innerHTML = `
         <div class="panel">
-          <h3>About Archetypes of Pleasure - HE</h3>
-          <p>מודול זה מבוסס על אותה תשתית של הגרסה האנגלית, עם התאמות RTL ומבנה מסכים זהה.</p>
-          <p>כרגע פעילים: Shuffle & Draw, Custom Deck, All Cards ומנגנון מועדפים.</p>
-          <p>בשלב הבא נחבר חזיתות ויזואליות מלאות לכל קלף (כשהתמונות יהיו זמינות), ואז נשלים אנימציות מעבר סופיות כמו באנגלית.</p>
+          <h3>About Archetypes of Pleasure</h3>
+          <p class="about-note">קריאה מקדימה + סטטוס מודול עברי על אותה תשתית אנגלית.</p>
+          <div class="about-stack">
+            <details class="about-acc" open>
+              <summary>לפני שמתחילים</summary>
+              <div class="about-body">הקלפים כאן נועדו לחקירה רגשית-אנרגטית דרך דימויים ארכיטיפיים.\nאפשר לשלוף אקראית, לבנות דק מותאם לפי ממלכות, או לעבור על כל הקלפים ולסמן מועדפים.</div>
+            </details>
+            <details class="about-acc">
+              <summary>אור וצל</summary>
+              <div class="about-body">כל ארכיטיפ מחזיק גם מתנה וגם צל.\nהמטרה אינה לשפוט או "לתקן", אלא לזהות, לתת מקום, ולבחור איך לעבוד עם האנרגיה הזו באופן מודע ובטוח.</div>
+            </details>
+            <details class="about-acc">
+              <summary>איך להשתמש בקלפים</summary>
+              <div class="about-body">• לבד: לבחור קלף ולשאול מה הוא מעיר בך.\n• בזוג: לבחור קלף משותף ולתרגם אותו למשחק, שפה, וקצב.\n• כשיחה: להשתמש בקלף כדי לדבר על רצונות, גבולות ופנטזיות.</div>
+            </details>
+            <details class="about-acc">
+              <summary>בטיחות ומודעות</summary>
+              <div class="about-body">העבודה הארכיטיפית יכולה לפתוח תכנים עמוקים.\nתמיד בהסכמה, עם מילת ביטחון, ועם עיבוד קצר אחרי התרגול. סקרנות עדיפה על שיפוט.</div>
+            </details>
+            <details class="about-acc">
+              <summary>סטטוס נכסים חזותיים</summary>
+              <div class="about-body">מיפוי תמונות חזית מוכן.
+<span class="status-chip">נדרש: ${expected}</span>
+<span class="status-chip">ממופה: ${available}</span>
+<span class="status-chip">חסר להשלמה: ${missing}</span>
+\nהמערכת כבר מחפשת תמונות לפי image-map. ברגע שמעלים קבצים בפורמט המצופה - הכרטיסים יציגו חזית ויזואלית אוטומטית.</div>
+            </details>
+          </div>
         </div>
       `;
     }
