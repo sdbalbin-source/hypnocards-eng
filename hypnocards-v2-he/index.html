@@ -296,6 +296,7 @@
             <p><strong>פרטיות</strong><br>הנתונים נשמרים מקומית בדפדפן/מכשיר שלך כברירת מחדל. אם משתמשים במכשיר משותף - מומלץ למחוק נתונים לאחר שימוש.</p>
             <div class="utility-row" style="justify-content:flex-start; margin:0.8rem 0 0;">
               <button class="secondary-btn" onclick="refreshStudio()">רענון כללי</button>
+              <button class="secondary-btn" onclick="applyAppUpdate()">כפיית עדכון עכשיו</button>
             </div>
             <p class="muted">השפה העיצובית נשמרת זהה לגרסה האנגלית: רקע ספירלי, זכוכית רכה, טיפוגרפיה אלגנטית ומבנה מודולרי.</p>
           </div>
@@ -311,6 +312,7 @@
       { id: 'hypno', name: 'מודול דפוסי שפה', path: './דפוסי שפה עברית/index.html' },
       { id: 'planner', name: 'מודול מצפן תשוקות', path: './מצפן התשוקות/index.html' }
     ];
+    const SW_BUILD = '2026-04-23-he-1';
     const PLANNER_SESSIONS_KEY = 'planner_sessions_v1';
     let deferredInstallPrompt = null;
     let diagnosticsCache = null;
@@ -608,7 +610,7 @@
     }
     function renderPlannerEmbed(sessionId, startChapter, autoShare, returnTo) {
       const plannerBase = './מצפן התשוקות/index.html';
-      const plannerSrc = `${plannerBase}${sessionId || startChapter || autoShare ? '?' : ''}${sessionId ? `sessionId=${encodeURIComponent(sessionId)}` : ''}${startChapter ? `${sessionId ? '&' : ''}startChapter=${encodeURIComponent(startChapter)}` : ''}${autoShare ? `${sessionId || startChapter ? '&' : ''}autoShare=${encodeURIComponent(autoShare)}` : ''}`;
+      const plannerSrc = `${plannerBase}?v=${encodeURIComponent(SW_BUILD)}${sessionId ? `&sessionId=${encodeURIComponent(sessionId)}` : ''}${startChapter ? `&startChapter=${encodeURIComponent(startChapter)}` : ''}${autoShare ? `&autoShare=${encodeURIComponent(autoShare)}` : ''}`;
       document.getElementById('app').innerHTML = `
         <div class="screen">
           <div class="back-row">
@@ -626,7 +628,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').then(reg => {
+        navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(SW_BUILD)}`).then(reg => {
           function markUpdateReady() {
             sessionStorage.setItem('he_update_ready', '1');
             renderUpdateBanner();
