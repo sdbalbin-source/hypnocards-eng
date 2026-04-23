@@ -620,7 +620,7 @@
       }, 180);
     }
     function renderPlannerEmbed(sessionId, startChapter, autoShare, returnTo) {
-      const plannerBase = resolveModulePath('%D7%9E%D7%A6%D7%A4%D7%9F%20%D7%94%D7%AA%D7%A9%D7%95%D7%A7%D7%95%D7%AA/index.html');
+      const plannerBase = resolveModulePath('מצפן התשוקות/index.html');
       const plannerSrc = `${plannerBase}${sessionId || startChapter || autoShare ? '?' : ''}${sessionId ? `sessionId=${encodeURIComponent(sessionId)}` : ''}${startChapter ? `${sessionId ? '&' : ''}startChapter=${encodeURIComponent(startChapter)}` : ''}${autoShare ? `${sessionId || startChapter ? '&' : ''}autoShare=${encodeURIComponent(autoShare)}` : ''}`;
       document.getElementById('app').innerHTML = `
         <div class="screen">
