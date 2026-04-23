@@ -188,6 +188,13 @@
       transition: opacity 180ms ease, transform 180ms ease;
     }
     .toast.show { opacity: 1; transform: translateY(0); }
+    @media (prefers-reduced-motion: reduce) {
+      .flip-inner,
+      .spread-card,
+      .toast {
+        transition: none !important;
+      }
+    }
     @media (max-width: 720px) { .spread-wrap { height: min(520px, 86vh); } .spread-card { width: clamp(104px, 24vw, 132px); } }
   </style>
 </head>
@@ -215,7 +222,7 @@
       <div class="hint">אפשר ללחוץ או למשוך קלף מהקשת</div>
     </div>
   </div>
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" aria-live="polite"></div>
 
   <script>
     const FAVORITES_KEY = 'archetype_he_favorites_v1';
@@ -582,7 +589,7 @@
             <button class="btn" onclick="setFavoritesSet(true)">סט מועדפים בלבד</button>
             <button class="btn" onclick="setFavoritesSet(false)">כל הדק הפעיל</button>
             <button class="btn" onclick="favoritesOnly = !favoritesOnly; setView('custom')">${favoritesOnly ? 'סינון מועדפים: פעיל' : 'סינון מועדפים: כבוי'}</button>
-            <button class="btn" onclick="setView('draw')">החל ועבור לשליפה</button>
+            <button class="btn" onclick="setView('draw')">החל ועבור לערבוב ושליפה</button>
           </div>
           <div class="meta">סמן ממלכות לדק מותאם אישית. אם לא מסומן כלום - כל הקלפים בדק.</div>
           <div class="meta">כמות קלפים בדק הנוכחי: ${activeDeckCount}</div>
@@ -710,6 +717,8 @@
     }
 
     async function rescanAssets() {
+      const host = document.getElementById('missingImageList');
+      if (host) host.textContent = 'סורק קבצים...';
       const coverage = await probeImageCoverage();
       IMAGE_AVAILABLE = coverage.available;
       IMAGE_RESOLVED = coverage.resolved;

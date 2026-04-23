@@ -258,31 +258,24 @@
     function openArchetypes() {
       document.getElementById('app').innerHTML = screens.archetypes;
     }
-    function openHypno() {
+    function renderEmbeddedModule(title, src, iframeTitle, extraAttrs = '') {
       document.getElementById('app').innerHTML = `
         <div class="screen">
           <div class="back-row">
             <button class="back-btn" onclick="renderHome()">←</button>
-            <h2 class="screen-title">דפוסי שפה היפנוטיים</h2>
+            <h2 class="screen-title">${title}</h2>
           </div>
           <div class="frame-wrap">
-            <iframe src="./דפוסי שפה עברית/index.html" title="דפוסי שפה עברית"></iframe>
+            <iframe src="${src}" title="${iframeTitle}" ${extraAttrs}></iframe>
           </div>
         </div>
       `;
     }
+    function openHypno() {
+      renderEmbeddedModule('דפוסי שפה היפנוטיים', './דפוסי שפה עברית/index.html', 'דפוסי שפה עברית');
+    }
     function openPlanner() {
-      document.getElementById('app').innerHTML = `
-        <div class="screen">
-          <div class="back-row">
-            <button class="back-btn" onclick="renderHome()">←</button>
-            <h2 class="screen-title">מצפן התשוקות</h2>
-          </div>
-          <div class="frame-wrap">
-            <iframe src="./מצפן התשוקות/index.html" title="מצפן התשוקות" allow="web-share"></iframe>
-          </div>
-        </div>
-      `;
+      renderEmbeddedModule('מצפן התשוקות', './מצפן התשוקות/index.html', 'מצפן התשוקות', 'allow="web-share"');
     }
 
     if ('serviceWorker' in navigator) {
