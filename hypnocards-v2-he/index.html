@@ -10,6 +10,9 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
   <title>Pleasure Practice Studio - Hebrew</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #050408;
@@ -237,72 +240,48 @@
   <div class="app" id="app"></div>
 
   <script>
-    const screens = {
-      home: `
-        <div class="screen">
-          <div class="title-wrap">
-            <h1 class="title-main">Pleasure Practice</h1>
-            <h1 class="title-sub">Studio - עברית</h1>
-            <p class="subtitle">שלושה כלים משולבים לתרגול</p>
+    const ABOUT_TEMPLATE = `
+        <div class="flex flex-col h-full bg-[#050408] md:max-w-[1240px] md:mx-auto md:w-full">
+          <div class="p-6 pt-8 flex items-center gap-4">
+            <button onclick="renderWelcome()" class="p-2 bg-white/5 rounded-full"><i data-lucide="arrow-left"></i></button>
+            <h2 class="text-2xl font-bold text-white serif-font">אודות Pleasure Practice Studio</h2>
           </div>
-          <div class="actions">
-            <button class="card-btn" onclick="openHypno()">
-              דפוסי שפה היפנוטיים
-              <div class="card-note">קלפים, תרגול תמות, מועדפים והקלטות</div>
-            </button>
-            <button class="card-btn" onclick="openArchetypes()">
-              ארכיטיפים של עונג
-              <div class="card-note">ערבוב ושליפה פעילים • פריסה ובחירת קלף</div>
-            </button>
-            <button class="card-btn" onclick="openPlanner()">
-              מצפן התשוקות
-              <div class="card-note">טופס הסכמות, סיכום ושיתוף</div>
-            </button>
-            <button class="secondary-btn" onclick="openAbout()">אודות הסטודיו</button>
-            <button class="secondary-btn" onclick="openDiagnostics()">מצב מערכת</button>
-            <div id="updateBannerHost"></div>
-            <div class="utility-row">
-              <button class="secondary-btn" id="installAppBtn" onclick="installHebrewApp()" hidden>התקן אפליקציה</button>
+          <div class="flex-1 overflow-y-auto px-6 pb-10 space-y-6 no-scrollbar">
+            <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+              <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">לשם מה הסטודיו קיים</h3>
+              <p class="text-gray-300 serif-font text-base leading-relaxed">מרחב שקט לחקירה אירוטית מודעת - לגלות מה רצוי לך, למצוא לזה שפה, ולבנות חוויות שנשענות על הסכמה, בטיחות ונוכחות.</p>
+            </div>
+            <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+              <h3 class="text-purple-300 font-bold text-lg serif-font mb-3">שלושה כלים, סטודיו אחד</h3>
+              <div class="space-y-4 text-gray-300 serif-font text-base leading-relaxed">
+                <p><span class="text-white font-bold">דפוסי שפה היפנוטיים</span><br>חבילת תרגול לשפה, קצב וטון.</p>
+                <p><span class="text-white font-bold">ארכיטיפים של עונג</span><br>חקירה רגשית־סמלית דרך דימויים וקלפים.</p>
+                <p><span class="text-white font-bold">מצפן התשוקות</span><br>שיח מובנה להסכמות, גבולות, עצימות ואפטרקר.</p>
+              </div>
+            </div>
+            <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+              <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">על סשה</h3>
+              <p class="text-gray-300 serif-font text-base leading-relaxed">סשה בלבין הוא מחנך לאמנויות אירוטיות ויוצר הסטודיו. העבודה שלו משלבת עומק, תשוקה והסכמה דרך כלים מעשיים לשימוש אישי או זוגי - כדי להפוך שיח אינטימי למדויק, בטוח ובר־יישום.</p>
+            </div>
+            <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+              <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">חיבור</h3>
+              <p class="text-gray-300 serif-font text-sm leading-relaxed">אפשר לעקוב אחרי <a href="https://www.instagram.com/sasha_balabin_erotic.arts/" target="_blank" rel="noopener noreferrer" class="text-fuchsia-300 underline decoration-fuchsia-400/50 hover:text-fuchsia-200">@sasha_balabin_erotic.arts</a> לתרגולים, רעיונות ועדכונים.</p>
+            </div>
+            <div class="bg-white/5 border border-purple-500/20 rounded-2xl p-5">
+              <h3 class="text-purple-300 font-bold text-lg serif-font mb-2">פרטיות</h3>
+              <p class="text-gray-300 serif-font text-sm leading-relaxed">הנתונים נשמרים מקומית בדפדפן/מכשיר שלך כברירת מחדל. אם משתמשים במכשיר משותף - מומלץ למחוק נתונים לאחר שימוש.</p>
+            </div>
+            <div class="pt-2">
+              <button onclick="promptInstallApp()" class="install-app-btn w-full py-3 rounded-2xl border border-purple-500/30 text-purple-200 text-sm hover:bg-purple-500/10 transition flex items-center justify-center gap-2 serif-font">
+                <i data-lucide="download"></i> התקן אפליקציה למסך הבית
+              </button>
+              <button onclick="forceUpdateApp()" class="mt-2 w-full py-2 rounded-xl border border-blue-500/30 text-blue-200 text-xs hover:bg-blue-500/10 transition flex items-center justify-center gap-2 font-mono">
+                <i data-lucide="refresh-cw"></i> כפיית עדכון עכשיו
+              </button>
             </div>
           </div>
         </div>
-      `,
-      archetypes: `
-        <div class="screen">
-          <div class="back-row">
-            <button class="back-btn" onclick="renderHome()">←</button>
-            <h2 class="screen-title">ארכיטיפים של עונג</h2>
-          </div>
-          <div class="frame-wrap">
-            <iframe src="./archetypes-he/index.html" title="ארכיטיפים של עונג"></iframe>
-          </div>
-        </div>
-      `,
-      about: `
-        <div class="screen">
-          <div class="back-row">
-            <button class="back-btn" onclick="renderHome()">←</button>
-            <h2 class="screen-title">אודות Pleasure Practice Studio</h2>
-          </div>
-          <div class="panel">
-            <p><strong>למה הסטודיו קיים</strong><br>מרחב שקט לחקירה אירוטית מודעת - לגלות מה רצוי לך, למצוא לזה שפה, ולבנות חוויות שנשענות על הסכמה, בטיחות ונוכחות.</p>
-            <p><strong>שלושה כלים - סטודיו אחד</strong></p>
-            <ul class="list">
-              <li><strong>דפוסי שפה היפנוטיים</strong> - חבילת תרגול לשפה, קצב וטון.</li>
-              <li><strong>ארכיטיפים של עונג</strong> - חקירה רגשית-סמלית דרך דימויים וקלפים.</li>
-              <li><strong>מצפן התשוקות</strong> - שיח מובנה להסכמות, גבולות, עצימות ואפטרקר.</li>
-            </ul>
-            <p><strong>על סשה</strong><br>סשה בלבין הוא מחנך לאמנויות אירוטיות ויוצר הסטודיו. העבודה שלו משלבת עומק, תשוקה והסכמה דרך כלים מעשיים לשימוש אישי או זוגי - כדי להפוך שיח אינטימי למדויק, בטוח ובר־יישום.</p>
-            <p><strong>פרטיות</strong><br>הנתונים נשמרים מקומית בדפדפן/מכשיר שלך כברירת מחדל. אם משתמשים במכשיר משותף - מומלץ למחוק נתונים לאחר שימוש.</p>
-            <div class="utility-row" style="justify-content:flex-start; margin:0.8rem 0 0;">
-              <button class="secondary-btn" onclick="refreshStudio()">רענון כללי</button>
-              <button class="secondary-btn" onclick="applyAppUpdate()">כפיית עדכון עכשיו</button>
-            </div>
-            <p class="muted">השפה העיצובית נשמרת זהה לגרסה האנגלית: רקע ספירלי, זכוכית רכה, טיפוגרפיה אלגנטית ומבנה מודולרי.</p>
-          </div>
-        </div>
-      `
-    };
+      `;
     const MODULE_HEALTH_CHECKS = [
       { id: 'shell', name: 'מעטפת עברית', path: './index.html' },
       { id: 'manifest', name: 'Manifest', path: './manifest.json' },
@@ -312,28 +291,129 @@
       { id: 'hypno', name: 'מודול דפוסי שפה', path: './דפוסי שפה עברית/index.html' },
       { id: 'planner', name: 'מודול מצפן תשוקות', path: './planner-he/index.html' }
     ];
-    const SW_BUILD = '2026-04-23-he-1';
+    const SW_BUILD = '2026-04-23-he-2';
+    const APP_CACHE_PREFIX = 'pleasure-he-v';
+    const CANONICAL_ORIGIN = 'https://pleasure-practice-he.pages.dev';
     const PLANNER_SESSIONS_KEY = 'planner_sessions_v1';
+    const THEME_ORDER = ['Direct Suggestions', 'Invitations', 'Identity', 'Future Pace'];
+    const DEFAULT_CATEGORY_INFO = {};
+    const AppState = { cards: [], categories: [], themes: [], plannerSessions: [] };
+    let CATEGORY_INFO = DEFAULT_CATEGORY_INFO;
     let deferredInstallPrompt = null;
+    let currentSwReg = null;
     let diagnosticsCache = null;
-    let plannerBackTarget = null;
 
-    function renderHome() {
-      document.getElementById('app').innerHTML = screens.home;
-      renderUpdateBanner();
-      renderInstallButton();
+    function mergeCategoryInfoMaps(defaults, incoming) {
+      return { ...(defaults || {}), ...(incoming || {}) };
     }
-    function openAbout() {
-      document.getElementById('app').innerHTML = screens.about;
+    function attachCategoryInfoToCards(cards) {
+      return Array.isArray(cards) ? cards.slice() : [];
+    }
+    function loadFromStorage() {
+      try {
+        const cachedCards = JSON.parse(localStorage.getItem('en_cards_data_v1') || '[]');
+        AppState.cards = Array.isArray(cachedCards) ? cachedCards : [];
+      } catch {
+        AppState.cards = [];
+      }
+      try {
+        const cachedCategoryInfo = JSON.parse(localStorage.getItem('en_category_info_v1') || '{}');
+        CATEGORY_INFO = cachedCategoryInfo && typeof cachedCategoryInfo === 'object' ? cachedCategoryInfo : DEFAULT_CATEGORY_INFO;
+      } catch {
+        CATEGORY_INFO = DEFAULT_CATEGORY_INFO;
+      }
+      AppState.themes = THEME_ORDER.slice();
+    }
+    function renderWelcome() {
+      if (AppState.cards.length === 0) {
+        fetch('cards_data.json')
+          .then(r => r.json())
+          .then(data => {
+            AppState.cards = data.cards;
+            AppState.categories = data.categories;
+            CATEGORY_INFO = mergeCategoryInfoMaps(DEFAULT_CATEGORY_INFO, data.category_info || {});
+            AppState.cards = attachCategoryInfoToCards(AppState.cards, CATEGORY_INFO);
+            try { localStorage.setItem('en_category_info_v1', JSON.stringify(CATEGORY_INFO)); } catch (e) {}
+            try { localStorage.setItem('en_cards_data_v1', JSON.stringify(AppState.cards)); } catch (e) {}
+            AppState.themes = THEME_ORDER.slice();
+          })
+          .catch(() => {
+            loadFromStorage();
+          });
+      }
+      document.getElementById('app').innerHTML = `
+        <div class="flex flex-col items-center justify-center h-full p-6 text-center relative z-10">
+          <div class="mb-8 relative">
+            <div class="absolute inset-0 bg-purple-500 blur-3xl opacity-20 rounded-full animate-pulse"></div>
+            <h1 class="text-5xl font-bold serif-font text-white mb-2 tracking-tight relative z-10">Pleasure Practice</h1>
+            <h1 class="text-5xl font-bold serif-font text-purple-400 mb-4 tracking-tight relative z-10">Studio</h1>
+            <p class="text-gray-400 mt-2 text-xs tracking-[0.25em] uppercase" style="font-family:'DM Mono',monospace">שלושה כלים משולבים לתרגול</p>
+          </div>
+
+          <button onclick="renderModeSelect()" class="w-full max-w-sm py-5 px-5 bg-white/10 border border-fuchsia-300/20 rounded-2xl text-white text-xl font-bold hover:bg-white/20 transition-all mb-3 flex items-center justify-center shadow-lg shadow-purple-900/20 serif-font text-center">
+            דפוסי שפה היפנוטיים
+          </button>
+          <button onclick="renderArchetypesHome()" class="w-full max-w-sm py-5 px-5 bg-white/10 border border-violet-300/20 rounded-2xl text-white text-xl font-bold hover:bg-white/20 transition-all mb-3 flex items-center justify-center shadow-lg shadow-purple-900/20 serif-font text-center">
+            ארכיטיפים של עונג
+          </button>
+          <button onclick="renderKinkyScenePlannerHome()" class="w-full max-w-sm py-5 px-5 bg-white/10 border border-blue-300/20 rounded-2xl text-white text-xl font-bold hover:bg-white/20 transition-all mb-5 flex items-center justify-center shadow-lg shadow-purple-900/20 serif-font text-center">
+            מצפן התשוקות
+          </button>
+
+          <button onclick="showAbout()" class="w-full max-w-xs py-3 rounded-2xl border border-purple-500/20 text-purple-300 text-base hover:bg-purple-500/10 transition flex items-center justify-center serif-font">
+            אודות כלליות
+          </button>
+
+          <button onclick="clearData()" class="absolute bottom-6 text-xs text-gray-600 hover:text-red-400 transition opacity-60 hover:opacity-100">
+            איפוס כל הנתונים
+          </button>
+        </div>
+      `;
+      lucide.createIcons();
+    }
+    function showAbout() {
+      document.getElementById('app').innerHTML = ABOUT_TEMPLATE;
+      lucide.createIcons();
+      updateInstallButtons();
     }
     function openArchetypes() {
-      document.getElementById('app').innerHTML = screens.archetypes;
+      renderEmbeddedModule('ארכיטיפים של עונג', './archetypes-he/index.html', 'ארכיטיפים של עונג');
+    }
+    function renderArchetypesHome() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="flex flex-col h-full p-6 bg-black/10">
+          <div class="flex items-center justify-between mb-8 pt-4">
+            <button onclick="renderWelcome()" class="p-3 bg-white/5 rounded-full hover:bg-white/10 transition">←</button>
+            <h2 class="text-2xl font-bold text-white serif-font">ארכיטיפים של עונג</h2>
+            <div class="w-10"></div>
+          </div>
+          <div class="grid gap-4">
+            <button onclick="drawRandomArchetype()" class="glass-panel module-home-card p-6 rounded-3xl hover:border-purple-500/50 transition">
+              <h3 class="text-xl font-bold text-white serif-font mb-1">ערבוב ושליפה</h3>
+              <p class="text-gray-400 serif-font text-base">ערבוב ויזואלי ולאחריו שליפת קלף.</p>
+            </button>
+            <button onclick="renderArchetypeDeckBuilder()" class="glass-panel module-home-card p-6 rounded-3xl hover:border-purple-500/50 transition">
+              <h3 class="text-xl font-bold text-white serif-font mb-1">חבילה מותאמת</h3>
+              <p class="text-gray-400 serif-font text-base">בחירת ממלכות ו/או מועדפים ואז שליפה.</p>
+            </button>
+            <button onclick="renderArchetypesList()" class="glass-panel module-home-card p-6 rounded-3xl hover:border-purple-500/50 transition">
+              <h3 class="text-xl font-bold text-white serif-font mb-1">כל הקלפים</h3>
+              <p class="text-gray-400 serif-font text-base">תצוגה מלאה לפי ממלכות עם סימון מועדפים.</p>
+            </button>
+            <button onclick="showArchetypesAbout()" class="glass-panel module-home-card p-6 rounded-3xl hover:border-purple-500/50 transition">
+              <h3 class="text-xl font-bold text-white serif-font mb-1">אודות ארכיטיפים של עונג</h3>
+              <p class="text-gray-400 serif-font text-base">רקע והנחיות שימוש במודול.</p>
+            </button>
+          </div>
+        </div>
+      `;
     }
     async function openDiagnostics() {
       document.getElementById('app').innerHTML = `
         <div class="screen">
           <div class="back-row">
-            <button class="back-btn" onclick="renderHome()">←</button>
+            <button class="back-btn" onclick="renderWelcome()">←</button>
             <h2 class="screen-title">מצב מערכת</h2>
           </div>
           <div class="panel">
@@ -353,7 +433,7 @@
       document.getElementById('app').innerHTML = `
         <div class="screen">
           <div class="back-row">
-            <button class="back-btn" onclick="renderHome()">←</button>
+            <button class="back-btn" onclick="renderWelcome()">←</button>
             <h2 class="screen-title">${title}</h2>
           </div>
           <div class="frame-wrap">
@@ -367,79 +447,150 @@
     function openHypno() {
       renderEmbeddedModule('דפוסי שפה היפנוטיים', './דפוסי שפה עברית/index.html', 'דפוסי שפה עברית');
     }
-    function openPlanner() {
-      renderPlannerHome();
+    function listHypnoRecordings() {
+      try {
+        const raw = localStorage.getItem('he_recordings_v4');
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
     }
+    function renderModeSelect() {
+      const app = document.getElementById('app');
+      const recordingsCount = listHypnoRecordings().length;
+      app.innerHTML = `
+        <div class="flex flex-col h-full p-5 bg-black/10">
+          <div class="flex items-center justify-between mb-6 pt-3 gap-3">
+            <button onclick="renderWelcome()" class="p-3 bg-white/5 rounded-full hover:bg-white/10 transition">←</button>
+            <h2 class="text-2xl font-bold text-white serif-font text-center">דפוסי שפה היפנוטיים</h2>
+            <div class="w-10"></div>
+          </div>
+          <div class="flex-1 min-h-0 flex flex-col justify-between">
+            <div class="grid gap-4">
+              <button onclick="startSession('all')" class="glass-panel module-home-card p-5 rounded-3xl hover:border-purple-500/50 transition relative overflow-hidden group">
+                <h3 class="text-[1.7rem] font-bold text-white mb-1 serif-font leading-tight">חבילה בסיסית</h3>
+                <p class="serif-font text-gray-300 text-base font-light leading-relaxed">
+                  חבילה מאוזנת בלי נושאים מתקדמים, לתרגול שוטף.
+                </p>
+              </button>
+              <button onclick="renderCategorySelect()" class="glass-panel module-home-card p-5 rounded-3xl hover:border-purple-500/50 transition relative overflow-hidden group">
+                <h3 class="text-[1.7rem] font-bold text-white mb-1 serif-font leading-tight">חבילה מותאמת</h3>
+                <p class="serif-font text-gray-300 text-base font-light leading-relaxed">בחירה לפי קטגוריות ממוקדות.</p>
+              </button>
+              <button onclick="renderRecordings()" class="glass-panel module-home-card p-4 rounded-3xl hover:border-purple-500/50 transition relative overflow-hidden group">
+                <div class="flex items-center justify-center gap-4">
+                  <div>
+                    <h3 class="text-lg font-bold text-white serif-font">ההקלטות שלי</h3>
+                    <p class="text-gray-400 text-xs text-center">${recordingsCount} סשנים שמורים</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+            <div class="pt-3">
+              <button onclick="showHypnoAbout()" class="w-full py-3 rounded-2xl border border-purple-500/35 bg-black/40 text-purple-200 text-sm hover:bg-purple-500/10 transition flex items-center justify-center gap-2 serif-font shadow-[0_8px_24px_rgba(0,0,0,0.35)]">
+                אודות דפוסי שפה היפנוטיים
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    function startSession(mode) {
+      openHypno();
+    }
+    function renderCategorySelect() {
+      openHypno();
+    }
+    function renderRecordings() {
+      openHypno();
+    }
+    function showHypnoAbout() {
+      openHypno();
+    }
+    function drawRandomArchetype() {
+      openArchetypes();
+    }
+    function renderArchetypeDeckBuilder() {
+      openArchetypes();
+    }
+    function renderArchetypesList() {
+      openArchetypes();
+    }
+    function showArchetypesAbout() {
+      openArchetypes();
+    }
+    function openPlanner() { renderKinkyScenePlannerHome(); }
     function listPlannerSessions() {
       try {
         const raw = localStorage.getItem(PLANNER_SESSIONS_KEY);
         const parsed = raw ? JSON.parse(raw) : [];
         if (!Array.isArray(parsed)) return [];
         return parsed
-          .map(s => {
-            if (!s || typeof s !== 'object') return s;
-            const session = (((s.plannerState || {}).session) || {});
-            return {
-              ...s,
-              sessionName: s.sessionName || session.sessionName || '',
-              role: s.role || session.role || null,
-              duration: Number.isFinite(Number(s.duration)) ? Number(s.duration) : Number(session.duration || 0) || null
-            };
-          })
-          .filter(s => s && typeof s === 'object' && typeof s.id === 'string' && s.plannerState && typeof s.plannerState === 'object')
-          .sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')));
+          .filter(s =>
+            s &&
+            typeof s === 'object' &&
+            typeof s.id === 'string' &&
+            typeof s.title === 'string' &&
+            typeof s.createdAt === 'string' &&
+            typeof s.updatedAt === 'string' &&
+            s.plannerState &&
+            typeof s.plannerState === 'object'
+          )
+          .sort((a, b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
       } catch {
         return [];
       }
     }
-    function plannerSessionTitle(s) {
-      const explicit = String((s && s.sessionName) || '').trim();
-      if (explicit) return explicit;
-      const nested = String((((s && s.plannerState) || {}).session || {}).sessionName || '').trim();
-      if (nested) return nested;
-      const nick = String((s && s.nickname) || '').trim();
-      return nick || 'סשן ללא כותרת';
+    function savePlannerSessions(sessions) {
+      const clean = Array.isArray(sessions) ? sessions.slice(0, 100) : [];
+      localStorage.setItem(PLANNER_SESSIONS_KEY, JSON.stringify(clean));
+      AppState.plannerSessions = clean;
     }
     function plannerSessionDate(s) {
       const raw = String((s && (s.updatedAt || s.createdAt)) || '');
-      if (!raw) return 'ללא תאריך';
       const dt = new Date(raw);
-      if (Number.isNaN(dt.getTime())) return 'ללא תאריך';
-      return dt.toLocaleString('he-IL', { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+      if (Number.isNaN(dt.getTime())) return String(raw || '');
+      return dt.toLocaleString('he-IL');
     }
     function plannerSessionMeta(s) {
-      const roleRaw = String((s && s.role) || ((((s && s.plannerState) || {}).session || {}).role) || '').trim();
-      const durationRaw = Number((s && s.duration) || ((((s && s.plannerState) || {}).session || {}).duration) || 0);
+      const snap = s && s.summarySnapshot && typeof s.summarySnapshot === 'object' ? s.summarySnapshot : {};
+      const roleRaw = String(snap.role || '').trim().toLowerCase();
       const roleMap = { dom: 'דום', sub: 'סאב', switch: 'סוויץ׳' };
-      const role = roleMap[roleRaw] || 'לא הוגדר תפקיד';
-      const duration = Number.isFinite(durationRaw) && durationRaw > 0 ? `${durationRaw} דק׳` : 'משך לא הוגדר';
+      const role = roleRaw ? (roleMap[roleRaw] || roleRaw) : '—';
+      const durationNum = Number(snap.duration || 0);
+      const duration = Number.isFinite(durationNum) && durationNum > 0 ? `${durationNum} דק׳` : '—';
       return `${role} • ${duration}`;
     }
-    function renderPlannerHome() {
+    function renderKinkyScenePlannerHome() {
       const savedSessionsCount = listPlannerSessions().length;
-      document.getElementById('app').innerHTML = `
-        <div class="screen">
-          <div class="back-row">
-            <button class="back-btn" onclick="renderHome()">←</button>
-            <h2 class="screen-title">מצפן התשוקות</h2>
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="flex flex-col h-full p-6 bg-black/10">
+          <div class="flex items-center justify-between mb-8 pt-4">
+            <button onclick="renderWelcome()" class="p-3 bg-white/5 rounded-full hover:bg-white/10 transition">←</button>
+            <h2 class="text-2xl font-bold text-white serif-font">מצפן התשוקות</h2>
+            <div class="w-10"></div>
           </div>
-          <div class="actions" style="width:min(920px,100%);">
-            <button class="card-btn" onclick="openPlannerNewSession()">
-              סשן הסכמות חדש
-              <div class="card-note">פתיחת תהליך חדש לבירור גבולות, רצונות והסכמות לפני מפגש.</div>
+          <div class="grid gap-4">
+            <button onclick="startPlannerSession()" class="glass-panel module-home-card p-6 rounded-3xl hover:border-purple-500/50 transition">
+              <h3 class="text-xl font-bold text-white serif-font mb-1">סשן הסכמות חדש</h3>
+              <p class="text-gray-400 serif-font text-base">פתיחת תהליך חדש לבירור גבולות, רצונות והסכמות לפני מפגש.</p>
             </button>
-            <button class="card-btn" onclick="renderPlannerSessions()">
-              הסשנים שלי
-              <div class="card-note">צפייה, המשך עריכה ושיתוף של סשנים שנשמרו (${savedSessionsCount}).</div>
+            <button onclick="renderPlannerSessions()" class="glass-panel module-home-card p-6 rounded-3xl hover:border-purple-500/50 transition">
+              <h3 class="text-xl font-bold text-white serif-font mb-1">הסשנים שלי</h3>
+                <p class="text-gray-400 serif-font text-base">צפייה, המשך וניהול של סשנים שנשמרו.</p>
+              <p class="text-gray-400 text-xs text-center mt-2">${savedSessionsCount} סשנים שמורים</p>
             </button>
-            <button class="card-btn" onclick="renderPlannerAbout()">
-              אודות מצפן התשוקות
-              <div class="card-note">רקע מלא, עקרונות בטיחות והנחיות שימוש נכונות.</div>
+            <button onclick="showPlannerAbout()" class="glass-panel module-home-card p-6 rounded-3xl hover:border-purple-500/50 transition">
+              <h3 class="text-xl font-bold text-white serif-font mb-1">אודות מצפן התשוקות</h3>
+              <p class="text-gray-400 serif-font text-base">רקע והנחיות שימוש נכונות במודול.</p>
             </button>
           </div>
         </div>
       `;
     }
+    function renderPlannerHome() { renderKinkyScenePlannerHome(); }
     function renderPlannerAbout() {
       document.getElementById('app').innerHTML = `
         <div class="screen">
@@ -486,60 +637,53 @@
         </div>
       `;
     }
+    function showPlannerAbout() {
+      renderPlannerAbout();
+    }
     function openPlannerNewSession() {
       const sid = `planner-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       renderPlannerEmbed('new', sid, null, null, 'home');
     }
+    function startPlannerSession() {
+      openPlannerNewSession();
+    }
     function renderPlannerSessions() {
+      const app = document.getElementById('app');
       const sessions = listPlannerSessions();
       const sessionsTitle = `הסשנים שלי (${sessions.length})`;
-      const emptyHtml = `
-        <div class="panel">
-          <p>עדיין אין סשנים שמורים.</p>
-          <div class="utility-row" style="justify-content:flex-start; margin:0.7rem 0 0;">
-            <button class="secondary-btn" onclick="openPlannerNewSession()">התחלת סשן חדש</button>
-            <button class="secondary-btn" onclick="renderPlannerHome()">חזרה</button>
-          </div>
-        </div>
-      `;
-      if (!sessions.length) {
-        document.getElementById('app').innerHTML = `
-          <div class="screen">
-            <div class="back-row">
-              <button class="back-btn" onclick="renderPlannerHome()">←</button>
-              <h2 class="screen-title">${sessionsTitle}</h2>
+      const rows = sessions.length
+        ? sessions.map(s => `
+          <div class="glass-panel p-4 rounded-2xl border border-white/15 space-y-3">
+            <div>
+              <div class="text-white serif-font text-[1.14rem] leading-tight font-semibold">${escapeHtml(s.title || 'סשן ללא כותרת')}</div>
+              <div class="text-[0.92rem] text-gray-300/90 serif-font mt-1">${escapeHtml(plannerSessionDate(s))}</div>
+              <div class="text-[0.84rem] text-gray-400 serif-font mt-1">${escapeHtml(plannerSessionMeta(s))}</div>
             </div>
-            ${emptyHtml}
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="openPlannerSummary('${escapeHtmlArchetype(String(s.id))}')" class="py-2 rounded-xl border border-purple-300/35 text-purple-100 text-[0.82rem] serif-font hover:bg-purple-500/10 transition">פתיחה</button>
+              <button onclick="openPlannerSession('${escapeHtmlArchetype(String(s.id))}')" class="py-2 rounded-xl border border-emerald-400/35 text-emerald-100 text-[0.82rem] serif-font hover:bg-emerald-500/10 transition">עריכה</button>
+              <button onclick="renamePlannerSession('${escapeHtmlArchetype(String(s.id))}')" class="py-2 rounded-xl border border-white/15 text-gray-200 text-[0.82rem] serif-font hover:bg-white/10 transition">שינוי שם</button>
+              <button onclick="deletePlannerSession('${escapeHtmlArchetype(String(s.id))}')" class="py-2 rounded-xl border border-rose-400/35 text-rose-100 text-[0.82rem] serif-font hover:bg-rose-500/10 transition">מחיקה</button>
+              <button onclick="sharePlannerSessionPdf('${escapeHtmlArchetype(String(s.id))}')" class="col-span-2 py-2 rounded-xl border border-sky-400/35 text-sky-100 text-[0.82rem] serif-font hover:bg-sky-500/10 transition">שיתוף PDF</button>
+            </div>
           </div>
-        `;
-        return;
-      }
-      const cards = sessions.map(s => `
-        <div class="session-card">
-          <div><strong>${escapeHtml(plannerSessionTitle(s))}</strong></div>
-          <div class="muted" style="font-size:0.84rem; margin-top:0.25rem;">${escapeHtml(plannerSessionDate(s))}</div>
-          <div class="muted" style="font-size:0.84rem; margin-top:0.2rem;">${escapeHtml(plannerSessionMeta(s))}</div>
-          <div class="session-actions">
-            <button class="secondary-btn" onclick="openPlannerSummary('${escapeHtml(String(s.id))}')">פתיחה</button>
-            <button class="secondary-btn" onclick="openPlannerSession('${escapeHtml(String(s.id))}')">עריכה</button>
-            <button class="secondary-btn" onclick="renamePlannerSession('${escapeHtml(String(s.id))}')">שינוי שם</button>
-            <button class="secondary-btn" onclick="deletePlannerSession('${escapeHtml(String(s.id))}')">מחיקה</button>
-            <button class="secondary-btn" onclick="sharePlannerSessionPdf('${escapeHtml(String(s.id))}')">שיתוף PDF</button>
+        `).join('')
+        : `<div class="glass-panel p-6 rounded-2xl border border-white/15 text-center">
+            <h3 class="text-xl text-white serif-font font-bold mb-2">עדיין אין סשנים שמורים</h3>
+            <p class="text-gray-400 serif-font text-base">התחילו סשן חדש כדי ליצור את הסשן הראשון שלכם.</p>
+           </div>`;
+      app.innerHTML = `
+        <div class="flex flex-col h-full bg-[#050408]">
+          <div class="p-6 pt-8 flex items-center gap-4">
+            <button onclick="renderKinkyScenePlannerHome()" class="p-2 bg-white/5 rounded-full">←</button>
+            <h2 class="text-2xl font-bold text-white serif-font">${sessionsTitle}</h2>
           </div>
-        </div>
-      `).join('');
-      document.getElementById('app').innerHTML = `
-        <div class="screen">
-          <div class="back-row">
-            <button class="back-btn" onclick="renderPlannerHome()">←</button>
-            <h2 class="screen-title">${sessionsTitle}</h2>
-          </div>
-          <div class="panel">${cards}</div>
+          <div class="flex-1 overflow-y-auto px-6 pb-10 space-y-3 no-scrollbar">${rows}</div>
         </div>
       `;
     }
     function getPlannerSessionById(sessionId) {
-      return listPlannerSessions().find(s => s && String(s.id) === String(sessionId)) || null;
+      return listPlannerSessions().find(s => s && s.id === sessionId) || null;
     }
     function openPlannerSession(sessionId) {
       if (!getPlannerSessionById(sessionId)) {
@@ -567,102 +711,66 @@
     }
     function renamePlannerSession(sessionId) {
       const rows = listPlannerSessions();
-      const ix = rows.findIndex(s => s && String(s.id) === String(sessionId));
-      if (ix < 0) {
-        alert('הסשן לא נמצא.');
-        return renderPlannerSessions();
-      }
-      const current = plannerSessionTitle(rows[ix]);
+      const ix = rows.findIndex(s => s.id === sessionId);
+      if (ix < 0) return;
+      const current = String(rows[ix].title || 'סשן ללא כותרת');
       const next = prompt('שם חדש לסשן:', current);
       if (next === null) return;
-      const clean = String(next || '').trim();
-      if (!clean) return;
-      rows[ix].sessionName = clean;
-      if (!rows[ix].plannerState || typeof rows[ix].plannerState !== 'object') rows[ix].plannerState = {};
-      if (!rows[ix].plannerState.session || typeof rows[ix].plannerState.session !== 'object') rows[ix].plannerState.session = {};
-      rows[ix].plannerState.session.sessionName = clean;
+      const clean = String(next || '').trim() || current;
+      rows[ix].title = clean;
       rows[ix].updatedAt = new Date().toISOString();
-      localStorage.setItem(PLANNER_SESSIONS_KEY, JSON.stringify(rows));
+      savePlannerSessions(rows);
       renderPlannerSessions();
+    }
+    function deletePlannerSessionById(sessionId) {
+      const sessions = listPlannerSessions().filter(s => s.id !== sessionId);
+      savePlannerSessions(sessions);
+      return sessions;
     }
     function deletePlannerSession(sessionId) {
-      const rows = listPlannerSessions();
-      const target = rows.find(s => s && String(s.id) === String(sessionId));
-      if (!target) {
-        alert('הסשן לא נמצא.');
-        return renderPlannerSessions();
-      }
-      if (!confirm(`למחוק את הסשן "${plannerSessionTitle(target)}"?`)) return;
-      const next = rows.filter(s => String((s && s.id) || '') !== String(sessionId));
-      localStorage.setItem(PLANNER_SESSIONS_KEY, JSON.stringify(next));
+      if (!confirm('למחוק את הסשן השמור? לא ניתן לבטל פעולה זו.')) return;
+      deletePlannerSessionById(sessionId);
       renderPlannerSessions();
     }
-    function backFromPlanner(returnTo) {
-      plannerBackTarget = returnTo === 'sessions' ? 'sessions' : 'home';
-      const frame = document.getElementById('plannerEmbed');
-      try {
-        frame?.contentWindow?.postMessage?.({ type: 'planner_request_save' }, window.location.origin);
-      } catch {}
-      setTimeout(() => {
-        if (plannerBackTarget === 'sessions') renderPlannerSessions();
-        else renderPlannerHome();
-        plannerBackTarget = null;
-      }, 180);
-    }
     function renderPlannerEmbed(mode, sessionId, startChapter, autoShare, returnTo) {
-      const plannerBases = [
-        './planner-he/index.html',
-        './%D7%9E%D7%A6%D7%A4%D7%9F%20%D7%94%D7%AA%D7%A9%D7%95%D7%A7%D7%95%D7%AA/index.html',
-        './מצפן התשוקות/index.html'
-      ];
-      const plannerSrcCandidates = plannerBases.map(base => {
-        const u = new URL(base, window.location.href);
-        u.searchParams.set('v', SW_BUILD);
-        if (sessionId) u.searchParams.set('sessionId', sessionId);
-        if (startChapter) u.searchParams.set('startChapter', startChapter);
-        if (autoShare) u.searchParams.set('autoShare', autoShare);
-        return `${u.pathname}${u.search}`;
-      });
-      const initialPlannerSrc = plannerSrcCandidates[0];
+      const app = document.getElementById('app');
+      const plannerSrc = `scene-planner-embed-he.html?v=${SW_BUILD}${sessionId ? `&sessionId=${encodeURIComponent(sessionId)}` : ''}${startChapter ? `&startChapter=${encodeURIComponent(startChapter)}` : ''}${autoShare ? `&autoShare=${encodeURIComponent(autoShare)}` : ''}`;
       const subtitle = mode === 'new' ? 'סשן הסכמות חדש' : 'מצפן התשוקות';
-      document.getElementById('app').innerHTML = `
-        <div class="screen">
-          <div class="back-row">
-            <button class="back-btn" onclick="backFromPlanner('${returnTo === 'sessions' ? 'sessions' : 'home'}')">←</button>
-            <h2 class="screen-title">${subtitle}</h2>
+      const backAction = returnTo === 'sessions' ? 'renderPlannerSessions()' : 'renderKinkyScenePlannerHome()';
+      app.innerHTML = `
+        <div class="flex flex-col h-full bg-[#050408]">
+          <div class="p-4 pt-6 flex items-center gap-3">
+            <button onclick="${backAction}" class="p-2 bg-white/5 rounded-full hover:bg-white/10 transition">←</button>
+            <h2 class="text-xl font-bold text-white serif-font">${subtitle}</h2>
           </div>
-          <div class="frame-wrap">
-            <iframe id="plannerEmbed" src="${initialPlannerSrc}" title="מצפן התשוקות" allow="web-share"></iframe>
-            <div id="plannerEmbed-status" class="embed-status">טוען מודול...</div>
+          <div class="flex-1 min-h-0 px-2 pb-3 md:px-6 md:pb-6">
+            <iframe src="${plannerSrc}" title="מצפן התשוקות" class="w-full h-full rounded-2xl border border-white/15 bg-black" loading="eager" allow="web-share" referrerpolicy="no-referrer"></iframe>
           </div>
         </div>
       `;
-      wireEmbedFrame('plannerEmbed', plannerSrcCandidates);
     }
 
     if ('serviceWorker' in navigator) {
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        if (sessionStorage.getItem('pps_reload_after_update') !== '1') return;
+        refreshing = true;
+        sessionStorage.removeItem('pps_reload_after_update');
+        window.location.reload();
+      });
+
       window.addEventListener('load', () => {
         navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(SW_BUILD)}`).then(reg => {
-          function markUpdateReady() {
-            sessionStorage.setItem('he_update_ready', '1');
-            renderUpdateBanner();
-          }
-          if (reg.waiting) markUpdateReady();
+          currentSwReg = reg;
           reg.addEventListener('updatefound', () => {
             const installing = reg.installing;
             if (!installing) return;
             installing.addEventListener('statechange', () => {
               if (installing.state === 'installed' && navigator.serviceWorker.controller) {
-                markUpdateReady();
+                alert('יש עדכון מוכן. אפשר ללחוץ "כפיית עדכון עכשיו" מתוך אודות כשתסיימו את הסשן הנוכחי.');
               }
             });
-          });
-          navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (sessionStorage.getItem('he_reload_after_update') === '1') {
-              sessionStorage.removeItem('he_reload_after_update');
-              sessionStorage.removeItem('he_update_ready');
-              window.location.reload();
-            }
           });
         }).catch(() => {});
       });
@@ -671,82 +779,103 @@
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredInstallPrompt = e;
-      renderInstallButton();
+      updateInstallButtons();
     });
 
     window.addEventListener('appinstalled', () => {
       deferredInstallPrompt = null;
-      renderInstallButton();
+      updateInstallButtons();
     });
 
     window.addEventListener('message', (e) => {
       if (e.origin !== window.location.origin) return;
       const data = e && e.data ? e.data : null;
       if (!data || typeof data !== 'object') return;
-      if (data.type === 'he_module_back_home') {
-        renderHome();
-        return;
-      }
       if (data.type === 'planner_session_finished') {
-        if (plannerBackTarget === 'home') {
-          renderPlannerHome();
-          plannerBackTarget = null;
-          return;
-        }
         renderPlannerSessions();
-        plannerBackTarget = null;
-        return;
-      }
-      if (data.type === 'planner_open_sessions') {
-        renderPlannerSessions();
-        return;
-      }
-      if (data.type === 'planner_open_new') {
-        openPlannerNewSession();
       }
     });
-
-    function renderUpdateBanner() {
-      const host = document.getElementById('updateBannerHost');
-      if (!host) return;
-      if (sessionStorage.getItem('he_update_ready') !== '1') {
-        host.innerHTML = '';
-        return;
-      }
-      host.innerHTML = `
-        <div class="update-banner">
-          <span>יש עדכון מוכן לאפליקציה</span>
-          <button class="secondary-btn" style="padding:0.42rem 0.7rem;" onclick="applyAppUpdate()">עדכן עכשיו</button>
-        </div>
-      `;
+    function isIos() {
+      return /iphone|ipad|ipod/i.test(navigator.userAgent);
     }
-
-    function applyAppUpdate() {
-      navigator.serviceWorker.getRegistration().then(reg => {
-        if (!reg) return;
-        sessionStorage.setItem('he_reload_after_update', '1');
-        if (reg.waiting) {
-          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+    function isAndroid() {
+      return /android/i.test(navigator.userAgent);
+    }
+    function isInstalledApp() {
+      return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    }
+    function updateInstallButtons() {
+      const installButtons = document.querySelectorAll('.install-app-btn');
+      installButtons.forEach(btn => {
+        if (isInstalledApp()) {
+          btn.style.display = 'flex';
+          btn.disabled = true;
+          btn.innerText = 'האפליקציה כבר מותקנת';
+        } else if (deferredInstallPrompt) {
+          btn.style.display = 'flex';
+          btn.disabled = false;
+          btn.innerText = 'התקן אפליקציה למסך הבית';
+        } else if (isIos()) {
+          btn.style.display = 'flex';
+          btn.disabled = false;
+          btn.innerText = 'איך להוסיף למסך הבית';
+        } else if (isAndroid()) {
+          btn.style.display = 'flex';
+          btn.disabled = false;
+          btn.innerText = 'התקן אפליקציה למסך הבית';
         } else {
-          reg.update();
-          alert('מתבצעת בדיקת עדכון. אם יש גרסה חדשה, לחצו שוב על "עדכן עכשיו".');
+          btn.style.display = 'flex';
+          btn.disabled = false;
+          btn.innerText = 'התקן אפליקציה למסך הבית';
         }
       });
     }
-
-    function renderInstallButton() {
-      const btn = document.getElementById('installAppBtn');
-      if (!btn) return;
-      btn.hidden = !deferredInstallPrompt;
+    async function promptInstallApp() {
+      if (isInstalledApp()) {
+        alert('האפליקציה כבר מותקנת במכשיר הזה.');
+        return;
+      }
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        const choice = await deferredInstallPrompt.userChoice;
+        if (choice && choice.outcome === 'accepted') {
+          deferredInstallPrompt = null;
+        }
+        updateInstallButtons();
+        return;
+      }
+      if (isIos()) {
+        alert('להתקנה באייפון:\n1. לחצו על Share ב-Safari\n2. בחרו Add to Home Screen\n3. אשרו Add');
+        return;
+      }
+      if (isAndroid()) {
+        alert('להתקנה באנדרואיד:\n1. פתחו את תפריט הדפדפן (3 נקודות)\n2. בחרו Add to Home screen או Install app\n3. אשרו התקנה');
+        return;
+      }
+      alert('חלון התקנה עדיין לא זמין בדפדפן זה. נסו Chrome/Edge או הוספה דרך תפריט הדפדפן למסך הבית.');
     }
-
-    function installHebrewApp() {
-      if (!deferredInstallPrompt) return;
-      deferredInstallPrompt.prompt();
-      deferredInstallPrompt.userChoice.finally(() => {
-        deferredInstallPrompt = null;
-        renderInstallButton();
-      });
+    async function forceUpdateApp() {
+      try {
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          const ownCaches = keys.filter(k => k.startsWith(APP_CACHE_PREFIX));
+          await Promise.all(ownCaches.map(k => caches.delete(k)));
+        }
+        if ('serviceWorker' in navigator) {
+          const reg = currentSwReg || (await navigator.serviceWorker.getRegistration());
+          if (reg) {
+            await reg.update();
+            const latestReg = await navigator.serviceWorker.getRegistration();
+            if (latestReg && latestReg.waiting) {
+              sessionStorage.setItem('pps_reload_after_update', '1');
+              latestReg.waiting.postMessage({ type: 'SKIP_WAITING' });
+              return;
+            }
+          }
+        }
+      } catch (e) {}
+      const bust = `?_refresh=${Date.now()}`;
+      window.location.href = `${CANONICAL_ORIGIN}${bust}`;
     }
 
     function clearHebrewLocalData() {
@@ -760,7 +889,7 @@
     }
 
     function clearPlannerLocalData() {
-      const keys = ['planner_sessions_v1', 'scene_planner_sessions_v1'];
+      const keys = ['planner_sessions_v1'];
       keys.forEach(k => localStorage.removeItem(k));
       alert('נתוני מצפן התשוקות נוקו.');
     }
@@ -774,6 +903,19 @@
       diagnosticsCache = null;
       const next = `${window.location.pathname}?refresh=${Date.now()}`;
       window.location.replace(next);
+    }
+    function clearData() {
+      const keys = [
+        'archetype_he_favorites_v1',
+        'archetype_he_deck_realms_v1',
+        'archetype_he_prefs_v1',
+        'planner_sessions_v1',
+        'he_favorites_v4',
+        'he_recordings_v4'
+      ];
+      keys.forEach(k => localStorage.removeItem(k));
+      alert('כל הנתונים המקומיים נמחקו מהאפליקציה.');
+      renderWelcome();
     }
 
     function wireEmbedFrame(frameId, srcOrCandidates) {
@@ -900,6 +1042,24 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
     }
+    function escapeHtmlArchetype(s) {
+      if (s == null || s === '') return '';
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+    async function preloadShellEssentials() {
+      const paths = [
+        './archetypes_he_data.json',
+        './archetypes-he/index.html',
+        './דפוסי שפה עברית/index.html'
+      ];
+      await Promise.all(paths.map(path =>
+        fetch(path, { cache: 'no-store' }).catch(() => null)
+      ));
+    }
 
     window.addEventListener('online', () => {
       diagnosticsCache = null;
@@ -908,7 +1068,9 @@
       diagnosticsCache = null;
     });
 
-    renderHome();
+    Promise.all([preloadShellEssentials()]).finally(() => {
+      renderWelcome();
+    });
   </script>
 </body>
 </html>
