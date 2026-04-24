@@ -1404,6 +1404,7 @@ label,
     const modeFromUrl = urlParams.get('mode') || '';
     const hashParams = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
     const sharedPayloadFromUrl = urlParams.get('shared') || hashParams.get('shared') || '';
+    const shareIdFromUrl = urlParams.get('shareId') || '';
     let activeSessionId = sessionIdFromUrl || `planner-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     let currentSessionVersion = '';
 
@@ -1472,6 +1473,34 @@ label,
         return null;
       }
     }
+    async function createServerShareId(payload) {
+      try {
+        const endpoint = new URL('./api/planner-share', window.location.origin + '/');
+        const resp = await fetch(endpoint.toString(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payload })
+        });
+        if (!resp.ok) return '';
+        const data = await resp.json().catch(() => null);
+        return data && typeof data.id === 'string' ? data.id : '';
+      } catch (_) {
+        return '';
+      }
+    }
+    async function fetchSharedPayloadById(shareId) {
+      if (!shareId) return null;
+      try {
+        const endpoint = new URL('./api/planner-share', window.location.origin + '/');
+        endpoint.searchParams.set('id', shareId);
+        const resp = await fetch(endpoint.toString(), { method: 'GET' });
+        if (!resp.ok) return null;
+        const data = await resp.json().catch(() => null);
+        return data && data.payload && typeof data.payload === 'object' ? data.payload : null;
+      } catch (_) {
+        return null;
+      }
+    }
     function parseSessionsSafe() {
       try {
         const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
@@ -1533,8 +1562,8 @@ label,
       writeSessionsSafe(sessions.slice(0, 100));
       currentSessionVersion = now;
     }
-    function loadSessionFromStorageIfPresent() {
-      if (!sessionIdFromUrl) return;
+    async function loadSessionFromStorageIfPresent() {
+      if (!sessionIdFromUrl && !sharedPayloadFromUrl && !shareIdFromUrl) return;
       const sessions = parseSessionsSafe();
       const saved = sessions.find(s => s && s.id === sessionIdFromUrl);
       if (saved && saved.plannerState) {
@@ -1548,6 +1577,13 @@ label,
       if (shared && shared.plannerState) {
         mergeStateFromSaved(shared.plannerState);
         return;
+      }
+      if (shareIdFromUrl) {
+        const remote = await fetchSharedPayloadById(shareIdFromUrl);
+        if (remote && remote.plannerState) {
+          mergeStateFromSaved(remote.plannerState);
+          return;
+        }
       }
       if (modeFromUrl === 'existing') {
         console.warn('[planner-en] shared session not found in localStorage and no valid shared payload found.');
@@ -3040,13 +3076,20 @@ label,
       const sharePdfBtn = document.getElementById('sharePdfBtn');
       const shareSummaryBtn = document.getElementById('shareSummaryBtn');
       const finishSessionBtn = document.getElementById('finishSessionBtn');
-      function buildSummaryShareUrl(){
+      async function buildSummaryShareUrl(){
         const base = new URL('scene-planner-embed-en.html', window.location.href);
         base.searchParams.set('sessionId', activeSessionId);
         base.searchParams.set('startChapter', 'chapter-8');
         base.searchParams.set('mode', 'existing');
+        const payload = { plannerState: buildPortablePlannerState() };
+        const shareId = await createServerShareId(payload);
+        if (shareId) {
+          base.searchParams.set('shareId', shareId);
+          base.searchParams.set('v', '2026-04-24-sharefix3');
+          return base.toString();
+        }
         base.searchParams.set('v', '2026-04-24-sharefix2');
-        const shared = encodeSharePayload({ plannerState: buildPortablePlannerState() });
+        const shared = encodeSharePayload(payload);
         if (shared) base.hash = `shared=${shared}`;
         return base.toString();
       }
@@ -3100,7 +3143,7 @@ label,
       sharePdfBtn?.addEventListener('click', shareAsPdf);
       shareSummaryBtn?.addEventListener('click', async () => {
         saveActiveSession();
-        const url = buildSummaryShareUrl();
+        const url = await buildSummaryShareUrl();
         try {
           if (navigator.share) {
             await navigator.share({ title: 'Kinky Scene Planner Summary', url });
@@ -3174,8 +3217,10 @@ label,
       updatePerspectiveBadges();
     }
 
-    loadSessionFromStorageIfPresent();
-    init();
+    (async () => {
+      await loadSessionFromStorageIfPresent();
+      init();
+    })();
   });
 </script>
 </body>
