@@ -1,4 +1,4 @@
-﻿const CACHE = 'hypnocards-v57';
+﻿const CACHE = 'hypnocards-v58';
 const ASSETS = [
   '/',
   '/index.html',
@@ -25,6 +25,7 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   const networkFirst =
     url.pathname.endsWith('/index.html') ||
+    url.pathname.endsWith('/scene-planner-embed-en.html') ||
     url.pathname.endsWith('/cards_data.json') ||
     url.pathname.endsWith('/archetypes_data.json') ||
     url.pathname.endsWith('/hypno_guidebook_data.json');
