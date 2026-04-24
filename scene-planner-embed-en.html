@@ -1404,7 +1404,7 @@ label,
     const modeFromUrl = urlParams.get('mode') || '';
     const hashParams = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
     const sharedPayloadFromUrl = urlParams.get('shared') || hashParams.get('shared') || '';
-    const shareIdFromUrl = urlParams.get('shareId') || '';
+    const shareIdFromUrl = urlParams.get('shareId') || hashParams.get('shareId') || '';
     let activeSessionId = sessionIdFromUrl || `planner-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     let currentSessionVersion = '';
 
@@ -1505,6 +1505,34 @@ label,
         return null;
       }
     }
+    function showMissingSharedSessionWarning() {
+      const host = document.querySelector('.site-header');
+      if (!host || document.getElementById('sharedSessionMissingWarning')) return;
+      const warn = document.createElement('div');
+      warn.id = 'sharedSessionMissingWarning';
+      warn.className = 'info-text';
+      warn.style.marginTop = '0.6rem';
+      warn.style.padding = '0.55rem 0.7rem';
+      warn.style.border = '1px solid var(--border)';
+      warn.style.borderRadius = '10px';
+      warn.style.background = 'rgba(255,255,255,0.06)';
+      warn.innerHTML = `
+        Could not load the requested shared session. It may have expired or been removed.
+        <div style="margin-top:0.5rem; display:flex; gap:0.4rem; flex-wrap:wrap;">
+          <button type="button" class="btn ghost" id="openSavedSessionsBtn">Open saved sessions</button>
+          <button type="button" class="btn" id="startNewSessionBtn">Start new session</button>
+        </div>
+      `;
+      host.appendChild(warn);
+      const openSavedSessionsBtn = document.getElementById('openSavedSessionsBtn');
+      const startNewSessionBtn = document.getElementById('startNewSessionBtn');
+      openSavedSessionsBtn?.addEventListener('click', () => {
+        window.parent?.postMessage?.({ type: 'planner_open_sessions' }, window.location.origin);
+      });
+      startNewSessionBtn?.addEventListener('click', () => {
+        window.parent?.postMessage?.({ type: 'planner_open_new' }, window.location.origin);
+      });
+    }
     function parseSessionsSafe() {
       try {
         const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
@@ -1568,6 +1596,13 @@ label,
     }
     async function loadSessionFromStorageIfPresent() {
       if (!sessionIdFromUrl && !sharedPayloadFromUrl && !shareIdFromUrl) return;
+      if (shareIdFromUrl) {
+        const remote = await fetchSharedPayloadById(shareIdFromUrl);
+        if (remote && remote.plannerState) {
+          mergeStateFromSaved(remote.plannerState);
+          return;
+        }
+      }
       const sessions = parseSessionsSafe();
       const saved = sessions.find(s => s && s.id === sessionIdFromUrl);
       if (saved && saved.plannerState) {
@@ -1582,15 +1617,9 @@ label,
         mergeStateFromSaved(shared.plannerState);
         return;
       }
-      if (shareIdFromUrl) {
-        const remote = await fetchSharedPayloadById(shareIdFromUrl);
-        if (remote && remote.plannerState) {
-          mergeStateFromSaved(remote.plannerState);
-          return;
-        }
-      }
       if (modeFromUrl === 'existing') {
         console.warn('[planner-en] shared session not found in localStorage and no valid shared payload found.');
+        showMissingSharedSessionWarning();
       }
     }
 
@@ -3181,8 +3210,8 @@ label,
           }
         }
         if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: 'planner_session_finished', sessionId: activeSessionId }, '*');
-          window.parent.postMessage({ type: 'planner_open_sessions', sessionId: activeSessionId }, '*');
+          window.parent.postMessage({ type: 'planner_session_finished', sessionId: activeSessionId }, window.location.origin);
+          window.parent.postMessage({ type: 'planner_open_sessions', sessionId: activeSessionId }, window.location.origin);
         } else {
           alert('Session saved.');
         }
