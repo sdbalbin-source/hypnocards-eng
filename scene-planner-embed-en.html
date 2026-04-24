@@ -1405,7 +1405,10 @@ label,
     const hashParams = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
     const sharedPayloadFromUrl = urlParams.get('shared') || hashParams.get('shared') || '';
     const shareIdFromUrl = urlParams.get('shareId') || hashParams.get('shareId') || '';
-    let activeSessionId = sessionIdFromUrl || `planner-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    function createLocalSessionId() {
+      return `planner-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    }
+    let activeSessionId = sessionIdFromUrl || createLocalSessionId();
     let currentSessionVersion = '';
 
     function cloneState() {
@@ -1479,7 +1482,7 @@ label,
     }
     async function createServerShareId(payload) {
       try {
-        const endpoint = new URL('./api/planner-share', window.location.origin + '/');
+        const endpoint = new URL('./api/planner-share', window.location.href);
         const resp = await fetch(endpoint.toString(), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1495,7 +1498,7 @@ label,
     async function fetchSharedPayloadById(shareId) {
       if (!shareId) return null;
       try {
-        const endpoint = new URL('./api/planner-share', window.location.origin + '/');
+        const endpoint = new URL('./api/planner-share', window.location.href);
         endpoint.searchParams.set('id', shareId);
         const resp = await fetch(endpoint.toString(), { method: 'GET' });
         if (!resp.ok) return null;
@@ -1600,6 +1603,7 @@ label,
         const remote = await fetchSharedPayloadById(shareIdFromUrl);
         if (remote && remote.plannerState) {
           mergeStateFromSaved(remote.plannerState);
+          activeSessionId = createLocalSessionId();
           return;
         }
       }
@@ -3189,6 +3193,15 @@ label,
           }
         } catch (_) {
           alert('Unable to create a share link right now. Please try again in a moment.');
+        }
+      });
+      window.addEventListener('message', (e) => {
+        if (e.origin !== window.location.origin) return;
+        const data = e && e.data ? e.data : null;
+        if (!data || typeof data !== 'object') return;
+        if (data.type === 'planner_request_save') {
+          saveActiveSession();
+          window.parent?.postMessage?.({ type: 'planner_session_finished', sessionId: activeSessionId }, window.location.origin);
         }
       });
       finishSessionBtn?.addEventListener('click', async () => {
