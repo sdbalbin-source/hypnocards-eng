@@ -1455,6 +1455,10 @@ label,
       };
       return pruneObject(compact) || {};
     }
+    function buildSharePayload() {
+      const fullState = cloneState();
+      return { plannerState: fullState };
+    }
     function encodeSharePayload(payload) {
       try {
         const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
@@ -3081,17 +3085,14 @@ label,
         base.searchParams.set('sessionId', activeSessionId);
         base.searchParams.set('startChapter', 'chapter-8');
         base.searchParams.set('mode', 'existing');
-        const payload = { plannerState: buildPortablePlannerState() };
+        const payload = buildSharePayload();
         const shareId = await createServerShareId(payload);
         if (shareId) {
           base.searchParams.set('shareId', shareId);
           base.searchParams.set('v', '2026-04-24-sharefix3');
           return base.toString();
         }
-        base.searchParams.set('v', '2026-04-24-sharefix2');
-        const shared = encodeSharePayload(payload);
-        if (shared) base.hash = `shared=${shared}`;
-        return base.toString();
+        throw new Error('share_service_unavailable');
       }
 
       async function shareAsPdf(){
@@ -3143,15 +3144,23 @@ label,
       sharePdfBtn?.addEventListener('click', shareAsPdf);
       shareSummaryBtn?.addEventListener('click', async () => {
         saveActiveSession();
-        const url = await buildSummaryShareUrl();
         try {
+          const url = await buildSummaryShareUrl();
           if (navigator.share) {
-            await navigator.share({ title: 'Kinky Scene Planner Summary', url });
-          } else {
+            try {
+              await navigator.share({ title: 'Kinky Scene Planner Summary', url });
+              return;
+            } catch (_) {}
+          }
+          const encoded = encodeURIComponent(url);
+          const popup = window.open(`https://wa.me/?text=${encoded}`, '_blank', 'noopener');
+          if (!popup) {
             await navigator.clipboard.writeText(url);
             alert('Summary link copied.');
           }
-        } catch (_) {}
+        } catch (_) {
+          alert('Unable to create a share link right now. Please try again in a moment.');
+        }
       });
       finishSessionBtn?.addEventListener('click', async () => {
         saveActiveSession();
